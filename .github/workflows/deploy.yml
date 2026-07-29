@@ -1,0 +1,31 @@
+name: Deploy to Fasthosts via FTP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Fasthosts FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ftp.fasthosts.co.uk
+          username: Legend123
+          # Note: Legend123 is the FTP username — password is stored in GitHub Secrets
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /htdocs/
+          protocol: ftps
+          port: 21
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .github/**
+            README.md
