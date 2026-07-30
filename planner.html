@@ -41,15 +41,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 @media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr 1fr}.site-header{padding:0 1rem}}
 @media(max-width:400px){.g2,.g3,.g4{grid-template-columns:1fr}}
 label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;font-weight:500}
-input[type=number],input[type=text],select{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;background:#fff;color:var(--text)}
-input[type=date]{border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);height:34px;box-sizing:border-box;flex:1;min-width:0}
+input[type=number],input[type=text],select{width:100%;height:36px;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;color:var(--text)}
+input[type=date]{border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);height:36px;box-sizing:border-box;flex:1;min-width:0}
 input[type=date]:focus{outline:none;border-color:var(--navy)}
 .dob-row{display:flex;align-items:center;gap:8px}
-.dob-age{font-size:12px;font-weight:600;color:var(--navy);background:var(--offwhite);border-radius:6px;padding:7px 12px;white-space:nowrap;flex-shrink:0}
+.dob-age{font-size:12px;font-weight:600;color:var(--navy);background:var(--offwhite);border-radius:6px;padding:0 12px;height:36px;box-sizing:border-box;display:flex;align-items:center;white-space:nowrap;flex-shrink:0}
 input[type=number]:focus,input[type=text]:focus,select:focus{outline:none;border-color:var(--navy)}
 input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .sv{font-size:12px;font-weight:700;color:var(--navy);margin-top:3px}
 .divider{border-top:1px solid var(--border);margin:.85rem 0 .7rem}
+.accum-table-wrap{overflow-x:auto;margin-top:.75rem}
+.accum-table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
+.accum-table th{background:var(--offwhite);color:var(--navy);text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:.55rem .7rem;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap}
+.accum-table td{padding:.55rem .7rem;border-bottom:1px solid var(--border);color:var(--text)}
+.accum-table tr:last-child td{font-weight:700;color:var(--navy);background:var(--offwhite)}
+.accum-table tr:last-child td:first-child{border-radius:6px 0 0 6px}
+.accum-table tr:last-child td:last-child{border-radius:0 6px 6px 0}
+.accum-table-note{font-size:11px;color:var(--muted);margin-top:.5rem;font-style:italic}
+.stepper{position:relative;display:flex;align-items:center}
+.stepper input{padding-right:26px!important}
+.stepper input[type=number]::-webkit-inner-spin-button,.stepper input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.stepper input[type=number]{-moz-appearance:textfield}
+.step-btns{position:absolute;right:1px;top:1px;bottom:1px;width:22px;display:flex;flex-direction:column;border-left:1px solid var(--border)}
+.step-btns button{flex:1;border:none;background:var(--offwhite);color:var(--muted);font-size:8px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.step-btns button:first-child{border-bottom:1px solid var(--border);border-top-right-radius:5px}
+.step-btns button:last-child{border-bottom-right-radius:5px}
+.step-btns button:hover{background:var(--navy);color:#fff}
 .mode-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
 .mode-btn{font-size:11px;padding:4px 10px;border:none;background:#fff;color:var(--muted);cursor:pointer;font-weight:600}
 .mode-btn.active{background:var(--navy);color:#fff}
@@ -196,15 +213,15 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
       <span style="font-size:12px;font-weight:600;color:var(--muted)">Save / load client data:</span>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-        <button onclick="saveJSON()" style="display:inline-flex;align-items:center;gap:5px;background:var(--navy);color:var(--gold-light);border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
+        <button onclick="saveJSON()" style="display:inline-flex;align-items:center;gap:5px;height:34px;box-sizing:border-box;background:var(--navy);color:var(--gold-light);border:1.5px solid var(--navy);border-radius:6px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4zm-5 16a3 3 0 110-6 3 3 0 010 6zm3-10H5V5h10v4z"/></svg>
           Save JSON
         </button>
-        <button onclick="saveCSV()" style="display:inline-flex;align-items:center;gap:5px;background:#1a7a4a;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
+        <button onclick="saveCSV()" style="display:inline-flex;align-items:center;gap:5px;height:34px;box-sizing:border-box;background:#1a7a4a;color:#fff;border:1.5px solid #1a7a4a;border-radius:6px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
           Export CSV
         </button>
-        <label style="display:inline-flex;align-items:center;gap:5px;background:var(--offwhite);color:var(--navy);border:1.5px solid var(--border);border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
+        <label style="display:inline-flex;align-items:center;gap:5px;height:34px;margin:0;box-sizing:border-box;background:var(--offwhite);color:var(--navy);border:1.5px solid var(--border);border-radius:6px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer">
           <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           Load file
           <input type="file" id="planner-load-input" accept=".json,.csv" style="display:none" onchange="loadFile(this)">
@@ -378,7 +395,7 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
 
     <div class="assump-bar">
       <div class="g3">
-        <div><label>Retirement age</label><input type="number" id="retire" value="67" min="40" max="85"></div>
+        <div><label>Retirement age</label><div class="stepper"><input type="number" id="retire" value="67" min="40" max="85"><div class="step-btns"><button type="button" class="step-up" data-target="retire" aria-label="Increase retirement age">&#9650;</button><button type="button" class="step-down" data-target="retire" aria-label="Decrease retirement age">&#9660;</button></div></div></div>
         <div><label>Growth rate (%)</label><input type="range" id="growth" min="1" max="12" step="0.5" value="5"><div class="sv" id="o-growth">5%</div></div>
         <div style="display:flex;align-items:flex-end"><div style="font-size:11px;color:var(--muted);padding-bottom:6px;line-height:1.5">Adjust these to see the effect on the results below.</div></div>
       </div>
@@ -389,6 +406,8 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <div class="leg" id="barleg"></div>
     <p class="charttitle">Pot accumulation to retirement</p>
     <div class="chartbox"><canvas id="cAccum"></canvas></div>
+    <p class="charttitle">Projected value in your final years to retirement</p>
+    <div class="accum-table-wrap"><table class="accum-table" id="accum-table"><thead><tr><th>Age</th><th>Projected pot</th><th>25% PCLS</th><th>Annuity income</th></tr></thead><tbody id="accum-table-body"></tbody></table></div><p class="accum-table-note" id="accum-table-note"></p>
     <div id="decum-results" class="decum-region">
     <p class="sec-sub">Retirement income &mdash; decumulation</p>
     <div class="g4" id="metrics-decum"></div>
@@ -550,6 +569,22 @@ window.addEventListener('DOMContentLoaded', function() {
     if(el.id==='empee-amt' || el.id==='emper-amt'){
       el.addEventListener('input', calc);
     }
+  });
+
+  document.querySelectorAll('.stepper').forEach(function(wrap){
+    var inp = wrap.querySelector('input');
+    var up = wrap.querySelector('.step-up');
+    var down = wrap.querySelector('.step-down');
+    function bump(delta){
+      var min = inp.min!==''?parseFloat(inp.min):-Infinity;
+      var max = inp.max!==''?parseFloat(inp.max):Infinity;
+      var val = parseFloat(inp.value)||0;
+      val = Math.min(max, Math.max(min, val+delta));
+      inp.value = val;
+      inp.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    if(up) up.addEventListener('click', function(){ bump(1); });
+    if(down) down.addEventListener('click', function(){ bump(-1); });
   });
 
   document.getElementById('add-tier').addEventListener('click',function(){
@@ -1257,6 +1292,24 @@ window.addEventListener('DOMContentLoaded', function() {
     var xAx={grid:gc,ticks:xT,title:{display:true,text:'Age',color:'#999',font:{size:11}}};
 
     mkChart('cAccum',{type:'line',data:{labels:aL,datasets:[{label:'Pension pot',data:aV,fill:true,backgroundColor:'rgba(29,53,59,0.07)',borderColor:'#1D353B',borderWidth:2,pointRadius:0,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return' '+fmtF(c.raw);}}}},scales:{x:xAx,y:{grid:gc,ticks:yT}}}});
+
+    var atStart=Math.max(0,aL.length-7);
+    var atRows=[];
+    for(var ati=atStart;ati<aL.length;ati++){
+      var atAge=aL[ati], atVal=aV[ati];
+      var atTaxFree=atVal*0.25;
+      var atResidual=atVal*0.75;
+      var atIncome=atResidual*anRate;
+      atRows.push({age:atAge,val:atVal,taxfree:atTaxFree,income:atIncome});
+    }
+    var atBody=document.getElementById('accum-table-body');
+    if(atBody){
+      atBody.innerHTML=atRows.map(function(r){
+        return '<tr><td>'+r.age+'</td><td>'+fmtF(r.val)+'</td><td>'+fmtF(r.taxfree)+'</td><td>'+fmtF(r.income)+'/yr</td></tr>';
+      }).join('');
+    }
+    var atNote=document.getElementById('accum-table-note');
+    if(atNote) atNote.textContent='Annuity income assumes the remaining 75% of the pot (after 25% PCLS) is used to purchase an annuity at your chosen rate of '+(anRate*100).toFixed(2)+'% per year.';
 
     var exIdx=exAge?dL.indexOf(exAge):-1;
     var bgs=dV.map(function(_,i){return(exIdx<0||i<exIdx)?'rgba(29,53,59,0.7)':'rgba(226,75,74,0.55)';});
