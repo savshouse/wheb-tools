@@ -91,6 +91,17 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .pot-total{display:flex;justify-content:space-between;align-items:center;background:var(--offwhite);border-radius:8px;padding:.6rem .9rem;margin-top:.6rem;border-left:3px solid var(--gold)}
 .pot-total span:first-child{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 .pot-total span:last-child{font-size:17px;font-weight:700;color:var(--navy)}
+.household-bar{background:#fff;border:1px solid var(--border);border-left:3px solid var(--navy);border-radius:10px;padding:.85rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.household-bar label{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin:0}
+.household-note{font-size:12px;color:var(--muted)}
+.partner-region{display:none}
+body.joint-on .partner-region{display:block}
+.person-tabs{display:flex;gap:6px;margin-bottom:.85rem}
+.person-tab{font-size:12px;padding:5px 13px;cursor:pointer;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:600}
+.person-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.person-view{display:none}
+.person-view.active{display:block}
+.partner-sec-badge{display:inline-block;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em;margin-left:8px;vertical-align:middle}
 .decum-region{display:none}
 body.decum-on .decum-region{display:block}
 .decum-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;background:#fff;border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;cursor:pointer;text-align:left}
@@ -208,6 +219,15 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <input type="text" id="cname" placeholder="Enter client name..." oninput="document.getElementById('print-name').textContent=this.value||'Personalised projection'">
   </div>
 
+  <div class="household-bar">
+    <label>Household</label>
+    <div class="mode-toggle" id="household-toggle">
+      <button type="button" class="mode-btn active" data-mode="single">Single</button>
+      <button type="button" class="mode-btn" data-mode="joint">Joint</button>
+    </div>
+    <span class="household-note" id="household-status-note">Modelling for one person</span>
+  </div>
+
   <!-- SAVE / LOAD BAR -->
   <div class="sec" style="padding:.875rem 1.25rem;margin-bottom:1rem">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
@@ -253,6 +273,23 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     </div>
   </div>
 
+  <div class="sec partner-region">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div>
+      <p class="stitle">Partner &mdash; about them<span class="partner-sec-badge">Joint</span></p>
+    </div>
+    <div class="g2">
+      <div>
+        <label>Date of birth</label>
+        <div class="dob-row">
+          <input type="date" id="p-dob" value="1991-06-15">
+          <span class="dob-age" id="p-o-age">Age 35</span>
+        </div>
+      </div>
+      <div><label>Annual salary (£)</label><input type="text" id="p-salary" value="35,000" class="currency-input"></div>
+    </div>
+  </div>
+
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></div>
@@ -262,6 +299,18 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <div id="pot-list"></div>
     <button class="abtn" id="add-pot">+ Add pension</button>
     <div class="pot-total"><span>Total pension pot</span><span id="pot-total-val">£0</span></div>
+  </div>
+
+  <div class="sec partner-region">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></div>
+      <p class="stitle">Partner &mdash; pension pots<span class="partner-sec-badge">Joint</span></p>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">Add each of your partner's existing pensions.</p>
+    <input type="hidden" id="p-pot" value="0">
+    <div id="p-pot-list"></div>
+    <button class="abtn" id="p-add-pot">+ Add pension</button>
+    <div class="pot-total"><span>Partner total pension pot</span><span id="p-pot-total-val">£0</span></div>
   </div>
 
   <div class="sec">
@@ -311,6 +360,53 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <button class="abtn" id="add-lumpsum">+ Add one-off payment</button>
   </div>
 
+  <div class="sec partner-region">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>
+      <p class="stitle">Partner &mdash; contributions<span class="partner-sec-badge">Joint</span></p>
+    </div>
+    <div class="g2">
+      <div>
+        <label>Partner's contribution</label>
+        <div class="mode-toggle" data-target="p-empee">
+          <button type="button" class="mode-btn active" data-mode="pct">% of salary</button>
+          <button type="button" class="mode-btn" data-mode="amt">£ amount pcm</button>
+        </div>
+        <div id="p-empee-pct-wrap" style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <input type="range" id="p-empee" min="0" max="50" step="0.5" value="5" style="flex:1">
+          <input type="number" id="p-empee-val" value="5" min="0" max="50" step="0.5" style="width:64px;flex-shrink:0">
+        </div>
+        <div id="p-empee-amt-wrap" style="display:none;margin-top:6px">
+          <input type="text" id="p-empee-amt" value="150" class="currency-input" placeholder="£ per month">
+        </div>
+        <div class="sv" id="o-p-empee">5%</div>
+      </div>
+      <div>
+        <label>Employer contribution</label>
+        <div class="mode-toggle" data-target="p-emper">
+          <button type="button" class="mode-btn active" data-mode="pct">% of salary</button>
+          <button type="button" class="mode-btn" data-mode="amt">£ amount pcm</button>
+        </div>
+        <div id="p-emper-pct-wrap" style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <input type="range" id="p-emper" min="0" max="50" step="0.5" value="3" style="flex:1">
+          <input type="number" id="p-emper-val" value="3" min="0" max="50" step="0.5" style="width:64px;flex-shrink:0">
+        </div>
+        <div id="p-emper-amt-wrap" style="display:none;margin-top:6px">
+          <input type="text" id="p-emper-amt" value="90" class="currency-input" placeholder="£ per month">
+        </div>
+        <div class="sv" id="o-p-emper">3%</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Contribution tiers &mdash; change rates at a future age (optional)</p>
+    <div id="p-tier-list"></div>
+    <button class="abtn" id="p-add-tier">+ Add tier</button>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500">One-off top-up payments &mdash; ad hoc lump sums at any age</p>
+    <div id="p-lumpsum-list"></div>
+    <button class="abtn" id="p-add-lumpsum">+ Add one-off payment</button>
+  </div>
+
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg></div>
@@ -319,6 +415,16 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">ISA, GIA, or any non-pension savings</p>
     <div id="sav-list"></div>
     <button class="abtn" id="add-sav">+ Add savings pot</button>
+  </div>
+
+  <div class="sec partner-region">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg></div>
+      <p class="stitle">Partner &mdash; other savings pots<span class="partner-sec-badge">Joint</span></p>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">ISA, GIA, or any non-pension savings belonging to your partner</p>
+    <div id="p-sav-list"></div>
+    <button class="abtn" id="p-add-sav">+ Add savings pot</button>
   </div>
 
   <button type="button" class="decum-toggle" id="decum-toggle" aria-expanded="false">
@@ -382,6 +488,58 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     </div>
   </div>
 
+<div class="sec partner-region">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
+      <p class="stitle">Partner &mdash; at retirement<span class="partner-sec-badge">Joint</span></p>
+    </div>
+    <div class="g3">
+      <div><label>Tax-free cash (%)</label><input type="range" id="p-pcls" min="0" max="25" step="1" value="25"><div class="sv" id="o-p-pcls">25% (max)</div></div>
+      <div><label>Amount to annuity (£)</label><input type="text" id="p-anamt" value="0" class="currency-input"><div class="sv" id="o-p-anamt" style="color:#666;font-weight:400;font-size:11px">From remaining pot after tax-free cash</div></div>
+      <div><label>Annuity rate (%/yr)</label><input type="range" id="p-anrate" min="2" max="10" step="0.25" value="5"><div class="sv" id="o-p-anrate">5%</div></div>
+    </div>
+    <div class="g3">
+      <div><label>Initial monthly drawdown (£)</label><input type="text" id="p-ddr" value="800" class="currency-input"><div class="sv" id="o-p-ddr" style="color:#666;font-weight:400;font-size:11px">From retirement age &mdash; change at any age below</div></div>
+      <div><label>Inflate drawdown income (%/yr)</label><input type="range" id="p-ddinfl" min="0" max="8" step="0.25" value="0"><div class="sv" id="o-p-ddinfl">0% &mdash; fixed amount</div></div>
+      <div><label>Drawdown pot growth (%)</label><input type="range" id="p-ddg" min="0" max="10" step="0.5" value="4"><div class="sv" id="o-p-ddg">4%</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Drawdown stages &mdash; change monthly amount at a later age</p>
+    <div id="p-ddstage-list"></div>
+    <button class="abtn" id="p-add-ddstage">+ Add stage</button>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500">One-off withdrawals from drawdown &mdash; ad hoc lump sums taken from the pot at any age</p>
+    <div id="p-ddlump-list"></div>
+    <button class="abtn" id="p-add-ddlump">+ Add one-off withdrawal</button>
+  </div>
+
+  <div class="sec partner-region">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg></div>
+      <p class="stitle">Partner &mdash; state pension &amp; guaranteed income<span class="partner-sec-badge">Joint</span></p>
+    </div>
+    <div class="g3">
+      <div><label>State pension (£/yr)</label><input type="text" id="p-state" value="12,547" class="currency-input"></div>
+      <div><label>State pension start age</label><input type="number" id="p-stateage" value="67" min="55" max="80"><div class="sv" id="o-p-stateage" style="color:#666;font-weight:400;font-size:11px">Auto-calculated from DOB &mdash; edit if needed</div></div>
+      <div><label>Inflate with CPI?</label><select id="p-stateinfl"><option value="1">Yes</option><option value="0">No &#8212; fixed</option></select></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Other guaranteed income &#8212; DB pension, rental, existing annuity, etc.</p>
+    <div id="p-inc-list"></div>
+    <button class="abtn" id="p-add-inc">+ Add income source</button>
+  </div>
+
+  <div class="sec partner-region">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg></div>
+      <p class="stitle">Partner &mdash; longevity<span class="partner-sec-badge">Joint</span></p>
+    </div>
+    <div class="g2">
+      <div><label>Life expectancy</label><input type="number" id="p-lifeexp" value="88" min="60" max="105"><div class="sv" id="o-p-lifeexp" style="color:#666;font-weight:400;font-size:11px">ONS-based estimate &mdash; edit if needed</div></div>
+      <div><label>Model to age (worst case)</label><input type="number" id="p-modelto" value="100" min="70" max="120"></div>
+    </div>
+  </div>
+
   </div><!-- /decum-inputs -->
 
   <div class="sec" id="results-sec">
@@ -403,6 +561,10 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
         <div><label>Growth rate (%)</label><input type="range" id="growth" min="1" max="12" step="0.5" value="5"><div class="sv" id="o-growth">5%</div></div>
         <div style="display:flex;align-items:flex-end"><div style="font-size:11px;color:var(--muted);padding-bottom:6px;line-height:1.5">Adjust these to see the effect on the results below.</div></div>
       </div>
+      <div class="g3 partner-region" style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)">
+        <div><label>Partner&rsquo;s retirement age</label><div class="stepper"><input type="number" id="p-retire" value="67" min="40" max="85"><div class="step-btns"><button type="button" class="step-up" data-target="p-retire" aria-label="Increase partner retirement age">&#9650;</button><button type="button" class="step-down" data-target="p-retire" aria-label="Decrease partner retirement age">&#9660;</button></div></div></div>
+        <div style="display:flex;align-items:flex-end;grid-column:span 2"><div style="font-size:11px;color:var(--muted);padding-bottom:6px;line-height:1.5">Growth rate and inflation above are shared across the household.</div></div>
+      </div>
     </div>
 
     <div class="g4" id="metrics"></div>
@@ -412,14 +574,45 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <div class="chartbox"><canvas id="cAccum"></canvas></div>
     <p class="charttitle">Projected value in your final years to retirement</p>
     <div class="accum-table-wrap"><table class="accum-table" id="accum-table"><thead><tr><th>Age</th><th>Projected pot</th><th>25% PCLS</th><th>Annuity income</th></tr></thead><tbody id="accum-table-body"></tbody></table></div><p class="accum-table-note" id="accum-table-note"></p>
+
+    <div class="partner-region" id="household-accum-block">
+      <p class="sec-sub">Household &mdash; combined pension wealth</p>
+      <div class="g3" id="household-accum-metrics"></div>
+      <p class="mc-note">Person 1 and Person 2 pots are shown at their own respective retirement ages; the combined figure is a simple sum of both.</p>
+    </div>
+
     <div id="decum-results" class="decum-region">
     <p class="sec-sub">Retirement income &mdash; decumulation</p>
     <div class="g4" id="metrics-decum"></div>
     <div id="alerts"></div>
-    <p class="charttitle">Income tax estimate at retirement (2024/25 bands)</p>
+
+    <div class="partner-region" id="household-decum-block">
+      <p class="sec-sub">Household &mdash; combined retirement income</p>
+      <div class="g3" id="household-decum-metrics"></div>
+      <p class="charttitle">Combined household income by year</p>
+      <div class="chartbox"><canvas id="cHousehold"></canvas></div>
+      <p class="mc-note" id="household-note"></p>
+    </div>
+
+    <p class="charttitle">Income tax estimate at retirement (2024/25 bands)<span class="partner-sec-badge" style="display:none" id="tax-p1-badge">Person 1</span></p>
     <div class="tax-grid" id="tax-summary"></div>
-    <p class="charttitle">Drawdown pot through retirement</p>
-    <div class="chartbox"><canvas id="cDecum"></canvas></div>
+    <div class="partner-region">
+      <p class="charttitle">Partner&rsquo;s income tax estimate<span class="partner-sec-badge">Person 2</span></p>
+      <div class="tax-grid" id="tax-summary-p"></div>
+    </div>
+
+    <p class="charttitle">Drawdown pot through retirement<span class="partner-sec-badge" style="display:none" id="decum-p1-badge">Person 1</span></p>
+    <div class="rgrid">
+      <div>
+        <div class="chartbox"><canvas id="cDecum"></canvas></div>
+      </div>
+      <div class="partner-region">
+        <p class="charttitle" style="margin-top:0">Partner&rsquo;s drawdown pot<span class="partner-sec-badge">Person 2</span></p>
+        <div class="chartbox"><canvas id="cDecumP"></canvas></div>
+      </div>
+    </div>
+    <div class="partner-region" id="alerts-p" style="margin-top:.5rem"></div>
+
     <p class="charttitle">Annual income by source</p>
     <div class="chartbox" style="height:240px"><canvas id="cIncome"></canvas></div>
     <div class="leg" id="incleg"></div>
@@ -512,6 +705,8 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   linkContrib('empee','empee-val','o-empee');
   linkContrib('emper','emper-val','o-emper');
+  linkContrib('p-empee','p-empee-val','o-p-empee');
+  linkContrib('p-emper','p-emper-val','o-p-emper');
 
   // Currency formatted inputs
   document.querySelectorAll('.currency-input').forEach(function(el) {
@@ -525,11 +720,15 @@ window.addEventListener('DOMContentLoaded', function() {
     el.addEventListener('input', calc);
   });
   sl('pcls',function(v){return v+'%'+(+v>=25?' (max)':'');});
-  ['retire','salary','pot','state','stateage','lifeexp','modelto'].forEach(function(id){
+  ['retire','salary','pot','state','stateage','lifeexp','modelto','p-retire','p-salary','p-state','p-stateage','p-lifeexp','p-modelto'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.addEventListener('input',calc);
   });
   document.getElementById('stateinfl').addEventListener('change',calc);
+  var pStateInflEl = document.getElementById('p-stateinfl'); if(pStateInflEl) pStateInflEl.addEventListener('change',calc);
   sl('ddinfl', function(v){ return (+v===0) ? '0% — fixed amount' : v+'%'; });
+  sl('p-ddg');sl('p-anrate');
+  sl('p-pcls',function(v){return v+'%'+(+v>=25?' (max)':'');});
+  sl('p-ddinfl', function(v){ return (+v===0) ? '0% — fixed amount' : v+'%'; });
 
   // Date of birth drives age, state pension age, and life expectancy auto-fill
   var spaManuallyEdited = false;
@@ -548,6 +747,37 @@ window.addEventListener('DOMContentLoaded', function() {
     if(!leManuallyEdited){
       document.getElementById('lifeexp').value = estimateLifeExpectancy(dob);
       document.getElementById('o-lifeexp').textContent = 'ONS-based estimate — edit if needed';
+    }
+    calc();
+  });
+
+  // Partner DOB drives partner age + partner state pension age + partner life expectancy
+  var pSpaManuallyEdited = false;
+  var pLeManuallyEdited = false;
+  (function(){
+    var pStateAgeEl = document.getElementById('p-stateage');
+    var pLifeexpEl = document.getElementById('p-lifeexp');
+    if(pStateAgeEl) pStateAgeEl.addEventListener('input', function(){ pSpaManuallyEdited = true; });
+    if(pLifeexpEl) pLifeexpEl.addEventListener('input', function(){ pLeManuallyEdited = true; });
+  })();
+
+  var pDobEl = document.getElementById('p-dob');
+  if(pDobEl) pDobEl.addEventListener('input', function(){
+    var dob = pDobEl.value;
+    var age = ageFromDOB(dob);
+    var pAgeLbl = document.getElementById('p-o-age');
+    if(pAgeLbl) pAgeLbl.textContent = 'Age ' + age;
+    var pStateAgeEl = document.getElementById('p-stateage');
+    var pOStateAgeEl = document.getElementById('p-o-stateage');
+    if(pStateAgeEl && !pSpaManuallyEdited){
+      pStateAgeEl.value = statePensionAgeYears(dob);
+      if(pOStateAgeEl) pOStateAgeEl.textContent = 'Auto-calculated from DOB (DWP bands)';
+    }
+    var pLifeexpEl = document.getElementById('p-lifeexp');
+    var pOLifeexpEl = document.getElementById('p-o-lifeexp');
+    if(pLifeexpEl && !pLeManuallyEdited){
+      pLifeexpEl.value = estimateLifeExpectancy(dob);
+      if(pOLifeexpEl) pOLifeexpEl.textContent = 'ONS-based estimate — edit if needed';
     }
     calc();
   });
@@ -779,6 +1009,175 @@ window.addEventListener('DOMContentLoaded', function() {
   function getDDStages(){return Array.from(document.querySelectorAll('#ddstage-list .ddrow')).map(function(r){var ins=r.querySelectorAll('input');return{age:+ins[0].value||99,monthly:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0)};}).sort(function(a,b){return a.age-b.age;});}
   function getDDLumpsums(){return Array.from(document.querySelectorAll('#ddlump-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{label:ins[0].value||'Withdrawal',amt:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0),age:+ins[2].value||99};});}
   function getLumpsums(){return Array.from(document.querySelectorAll('#lumpsum-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{label:ins[0].value||'Lump sum',amt:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0),age:+ins[2].value||99};});}
+  document.getElementById('p-add-tier').addEventListener('click',function(){
+    tcnt++;var id='p-'+tcnt;
+    var d=document.createElement('div');d.id='p-tier-'+tcnt;d.className='trow';
+    function makeField(labelText, inputEl){
+      var wrap=document.createElement('div');
+      var lbl=document.createElement('label');lbl.style.fontSize='11px';lbl.textContent=labelText;
+      wrap.appendChild(lbl);wrap.appendChild(inputEl);
+      return wrap;
+    }
+    var ageInp=document.createElement('input');ageInp.type='number';ageInp.value='45';ageInp.min='18';ageInp.max='85';
+    var ageField=makeField('From age',ageInp);
+    var eeInp=document.createElement('input');eeInp.type='number';eeInp.value='8';eeInp.min='0';eeInp.max='50';eeInp.step='0.5';
+    var eeField=makeField('Partner % (or £/mo)',eeInp);
+    var erInp=document.createElement('input');erInp.type='number';erInp.value='5';erInp.min='0';erInp.max='50';erInp.step='0.5';
+    var erField=makeField('Employer % (or £/mo)',erInp);
+    var modeWrap=document.createElement('div');
+    var modeToggle=document.createElement('div');modeToggle.className='mode-toggle mode-toggle-sm';
+    var pctBtn=document.createElement('button');pctBtn.type='button';pctBtn.className='mode-btn active';pctBtn.textContent='%';pctBtn.dataset.mode='pct';
+    var amtBtn=document.createElement('button');amtBtn.type='button';amtBtn.className='mode-btn';amtBtn.textContent='£';amtBtn.dataset.mode='amt';
+    modeToggle.appendChild(pctBtn);modeToggle.appendChild(amtBtn);
+    var modeLbl=document.createElement('label');modeLbl.style.fontSize='11px';modeLbl.textContent='Mode';
+    modeWrap.appendChild(modeLbl);modeWrap.appendChild(modeToggle);
+    d.dataset.tierMode='pct';
+    pctBtn.addEventListener('click',function(){pctBtn.classList.add('active');amtBtn.classList.remove('active');d.dataset.tierMode='pct';calc();});
+    amtBtn.addEventListener('click',function(){amtBtn.classList.add('active');pctBtn.classList.remove('active');d.dataset.tierMode='amt';calc();});
+    var isaInp=document.createElement('input');isaInp.type='number';isaInp.value='0';isaInp.min='0';isaInp.step='100';
+    var isaField=makeField('Extra amount (£/yr)',isaInp);
+    var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
+    delBtn.addEventListener('click',function(){d.remove();calc();});
+    d.appendChild(ageField);d.appendChild(eeField);d.appendChild(erField);d.appendChild(modeWrap);d.appendChild(isaField);d.appendChild(delBtn);
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    document.getElementById('p-tier-list').appendChild(d);calc();
+  });
+
+  document.getElementById('p-add-lumpsum').addEventListener('click',function(){
+    lcnt++;var id='p-'+lcnt;
+    var d=document.createElement('div');d.id='p-lump-'+lcnt;d.className='irow';
+    function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
+    var labelInp=document.createElement('input');labelInp.type='text';labelInp.value='Inheritance';
+    var amtInp=document.createElement('input');amtInp.type='text';amtInp.value='10,000';amtInp.className='currency-input';
+    amtInp.addEventListener('blur',function(){var raw=parseFloat(amtInp.value.replace(/,/g,''))||0;amtInp.value=raw.toLocaleString('en-GB');});
+    amtInp.addEventListener('focus',function(){amtInp.value=amtInp.value.replace(/,/g,'');amtInp.select();});
+    var ageInp=document.createElement('input');ageInp.type='number';ageInp.value=String((ageFromDOB(document.getElementById('p-dob').value)||35)+3);ageInp.min='18';ageInp.max='85';
+    var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
+    delBtn.addEventListener('click',function(){d.remove();calc();});
+    d.appendChild(mkf('Description',labelInp));
+    d.appendChild(mkf('Amount (£)',amtInp));
+    d.appendChild(mkf('At age',ageInp));
+    d.appendChild(delBtn);
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    document.getElementById('p-lumpsum-list').appendChild(d);calc();
+  });
+
+  function getTiersP(){return Array.from(document.querySelectorAll('#p-tier-list .trow')).map(function(r){
+    var ins=r.querySelectorAll('input');
+    var mode=r.dataset.tierMode||'pct';
+    var eeRaw=+ins[1].value||0, erRaw=+ins[2].value||0;
+    return{ age:+ins[0].value||99, mode:mode, ee: mode==='amt' ? eeRaw*12 : eeRaw/100, er: mode==='amt' ? erRaw*12 : erRaw/100 };
+  }).sort(function(a,b){return a.age-b.age;});}
+
+  function getLumpsumsP(){return Array.from(document.querySelectorAll('#p-lumpsum-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{label:ins[0].value||'Lump sum',amt:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0),age:+ins[2].value||99};});}
+  document.getElementById('p-add-sav').addEventListener('click',function(){
+    scnt++;var id='p-'+scnt;
+    var d=document.createElement('div');d.id='p-sav-'+scnt;d.className='irow';
+    function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
+    var nameInp=document.createElement('input');nameInp.type='text';nameInp.value='ISA';
+    var valInp=document.createElement('input');valInp.type='number';valInp.value='10000';valInp.step='500';
+    var contribInp=document.createElement('input');contribInp.type='number';contribInp.value='3000';contribInp.step='100';
+    var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
+    delBtn.addEventListener('click',function(){d.remove();calc();});
+    d.appendChild(mkf('Name',nameInp));
+    d.appendChild(mkf('Current value (£)',valInp));
+    d.appendChild(mkf('Annual contrib (£)',contribInp));
+    d.appendChild(delBtn);
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    document.getElementById('p-sav-list').appendChild(d);calc();
+  });
+
+  function getSavsP(){return Array.from(document.querySelectorAll('#p-sav-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{name:ins[0].value||'Savings',val:+ins[1].value||0,contrib:+ins[2].value||0};});}
+  document.getElementById('p-add-ddlump').addEventListener('click',function(){
+    lcnt++;var id='p-ddlump-'+lcnt;
+    var d=document.createElement('div');d.id=id;d.className='irow';
+    function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
+    var labelInp=document.createElement('input');labelInp.type='text';labelInp.value='New car';
+    var amtInp=document.createElement('input');amtInp.type='text';amtInp.value='10,000';amtInp.className='currency-input';
+    amtInp.addEventListener('blur',function(){var raw=parseFloat(amtInp.value.replace(/,/g,''))||0;amtInp.value=raw.toLocaleString('en-GB');});
+    amtInp.addEventListener('focus',function(){amtInp.value=amtInp.value.replace(/,/g,'');amtInp.select();});
+    var ageInp=document.createElement('input');ageInp.type='number';ageInp.value=String((gv('p-retire')||67)+2);ageInp.min='50';ageInp.max='120';
+    var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
+    delBtn.addEventListener('click',function(){d.remove();calc();});
+    d.appendChild(mkf('Description',labelInp));
+    d.appendChild(mkf('Amount (£)',amtInp));
+    d.appendChild(mkf('At age',ageInp));
+    d.appendChild(delBtn);
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    document.getElementById('p-ddlump-list').appendChild(d);calc();
+  });
+
+  document.getElementById('p-add-ddstage').addEventListener('click', function() {
+    var dcnt_id = 'p-ddstage-' + Date.now();
+    var retire_age = gv('p-retire') || 67;
+    var d = document.createElement('div');
+    d.id = dcnt_id;
+    d.className = 'ddrow irow';
+    var ageDiv = document.createElement('div');
+    var ageLbl = document.createElement('label');
+    ageLbl.style.fontSize = '11px';
+    ageLbl.textContent = 'From age';
+    var ageInp = document.createElement('input');
+    ageInp.type = 'number';
+    ageInp.value = retire_age + 5;
+    ageInp.min = retire_age + 1;
+    ageInp.max = 120;
+    ageDiv.appendChild(ageLbl);
+    ageDiv.appendChild(ageInp);
+    var amtDiv = document.createElement('div');
+    var amtLbl = document.createElement('label');
+    amtLbl.style.fontSize = '11px';
+    amtLbl.textContent = 'Monthly amount (£)';
+    var amtInp = document.createElement('input');
+    amtInp.type = 'text';
+    amtInp.value = '600';
+    amtInp.className = 'currency-input';
+    amtInp.addEventListener('blur', function() { var raw = parseFloat(amtInp.value.replace(/,/g,'')) || 0; amtInp.value = raw.toLocaleString('en-GB'); });
+    amtInp.addEventListener('focus', function() { amtInp.value = amtInp.value.replace(/,/g,''); amtInp.select(); });
+    amtInp.addEventListener('input', calc);
+    amtDiv.appendChild(amtLbl);
+    amtDiv.appendChild(amtInp);
+    var noteDiv = document.createElement('div');
+    noteDiv.style.cssText = 'display:flex;align-items:flex-end';
+    var noteSpan = document.createElement('div');
+    noteSpan.style.cssText = 'font-size:11px;color:var(--muted);padding-bottom:8px';
+    noteSpan.textContent = 'Fixed £/month from this age';
+    noteDiv.appendChild(noteSpan);
+    var delBtn = document.createElement('button');
+    delBtn.className = 'dbtn';
+    delBtn.innerHTML = '&#215;';
+    delBtn.addEventListener('click', function() { d.remove(); calc(); });
+    d.appendChild(ageDiv);
+    d.appendChild(amtDiv);
+    d.appendChild(noteDiv);
+    d.appendChild(delBtn);
+    ageInp.addEventListener('input', calc);
+    document.getElementById('p-ddstage-list').appendChild(d);
+    calc();
+  });
+
+  document.getElementById('p-add-inc').addEventListener('click',function(){
+    icnt++;var id='p-'+icnt;
+    var d=document.createElement('div');d.id='p-inc-'+icnt;d.className='irow4';
+    function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
+    var nameInp=document.createElement('input');nameInp.type='text';nameInp.value='DB pension';
+    var amtInp=document.createElement('input');amtInp.type='number';amtInp.value='5000';amtInp.step='100';
+    var ageInp=document.createElement('input');ageInp.type='number';ageInp.value='65';ageInp.min='50';ageInp.max='90';
+    var inflInp=document.createElement('input');inflInp.type='number';inflInp.value='0';inflInp.min='0';inflInp.max='10';inflInp.step='0.25';
+    var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
+    delBtn.addEventListener('click',function(){d.remove();calc();});
+    d.appendChild(mkf('Name',nameInp));
+    d.appendChild(mkf('Amount (£/yr)',amtInp));
+    d.appendChild(mkf('Start age',ageInp));
+    d.appendChild(mkf('Increase %/yr',inflInp));
+    d.appendChild(delBtn);
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    document.getElementById('p-inc-list').appendChild(d);calc();
+  });
+
+  function getDDStagesP(){return Array.from(document.querySelectorAll('#p-ddstage-list .ddrow')).map(function(r){var ins=r.querySelectorAll('input');return{age:+ins[0].value||99,monthly:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0)};}).sort(function(a,b){return a.age-b.age;});}
+  function getDDLumpsumsP(){return Array.from(document.querySelectorAll('#p-ddlump-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{label:ins[0].value||'Withdrawal',amt:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0),age:+ins[2].value||99};});}
+  function getIncsP(){return Array.from(document.querySelectorAll('#p-inc-list .irow4')).map(function(r){var ins=r.querySelectorAll('input');return{name:ins[0].value||'Income',amt:+ins[1].value||0,startAge:+ins[2].value||0,infl:(+ins[3].value||0)/100};});}
   function getContribMode(target){var t=document.querySelector('.mode-toggle[data-target="'+target+'"]');if(!t)return'pct';var active=t.querySelector('.mode-btn.active');return active?active.dataset.mode:'pct';}
 
   function mkChart(id,cfg){if(CH[id]){CH[id].destroy();delete CH[id];}var el=document.getElementById(id);if(el)CH[id]=new Chart(el,cfg);}
@@ -899,6 +1298,43 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   document.getElementById('add-pot').addEventListener('click',function(){ potRow('Pension',0); syncPots(); });
 
+  // ---------- Partner pension pots (parallel implementation, zero risk to primary) ----------
+  var pPcnt = 0;
+  function potRowP(name, val){
+    pPcnt++; var id='p-pot-'+pPcnt;
+    var d=document.createElement('div'); d.id=id; d.className='potrow';
+    function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
+    var nameInp=document.createElement('input'); nameInp.type='text'; nameInp.value=name||'Pension';
+    var valInp=document.createElement('input'); valInp.type='text'; valInp.className='currency-input';
+    valInp.value=(val===undefined?20000:val).toLocaleString('en-GB');
+    valInp.addEventListener('blur',function(){var raw=parseFloat(valInp.value.replace(/,/g,''))||0;valInp.value=raw.toLocaleString('en-GB');});
+    valInp.addEventListener('focus',function(){valInp.value=valInp.value.replace(/,/g,'');valInp.select();});
+    var del=document.createElement('button'); del.className='dbtn'; del.innerHTML='&#215;';
+    del.addEventListener('click',function(){ d.remove(); syncPotsP(); });
+    d.appendChild(mkf('Provider / name',nameInp));
+    d.appendChild(mkf('Current value (£)',valInp));
+    d.appendChild(del);
+    d.querySelectorAll('input').forEach(function(i){ i.addEventListener('input', syncPotsP); });
+    document.getElementById('p-pot-list').appendChild(d);
+    return d;
+  }
+  function getPotsP(){
+    return Array.from(document.querySelectorAll('#p-pot-list .potrow')).map(function(r){
+      var ins=r.querySelectorAll('input');
+      return { name: ins[0].value||'Pension', val: parseFloat((ins[1].value||'0').replace(/,/g,''))||0 };
+    });
+  }
+  function syncPotsP(){
+    var pots=getPotsP();
+    var total=pots.reduce(function(a,b){return a+b.val;},0);
+    var hidden=document.getElementById('p-pot');
+    if(hidden) hidden.value=total;
+    var lbl=document.getElementById('p-pot-total-val');
+    if(lbl) lbl.textContent='£'+Math.round(total).toLocaleString('en-GB');
+    calc();
+  }
+  document.getElementById('p-add-pot').addEventListener('click',function(){ potRowP('Pension',0); syncPotsP(); });
+
   function gatherState() {
     return {
       version: 2,
@@ -938,6 +1374,36 @@ window.addEventListener('DOMContentLoaded', function() {
       savings:     getSavs(),
       incomes:     getIncs(),
       lumpsums:    getLumpsums(),
+      // Household / partner
+      household:   document.body.classList.contains('joint-on') ? 'joint' : 'single',
+      pDob:        (document.getElementById('p-dob')||{}).value || '',
+      pRetire:     (document.getElementById('p-retire')||{}).value || '',
+      pSalary:     (document.getElementById('p-salary')||{}).value || '',
+      pPot:        (document.getElementById('p-pot')||{}).value || '',
+      pPots:       (typeof getPotsP==='function') ? getPotsP() : [],
+      pEmpeeMode:  getContribMode('p-empee'),
+      pEmpee:      (document.getElementById('p-empee')||{}).value || '',
+      pEmpeeAmt:   (document.getElementById('p-empee-amt')||{}).value || '',
+      pErMode:     getContribMode('p-emper'),
+      pEmper:      (document.getElementById('p-emper')||{}).value || '',
+      pEmperAmt:   (document.getElementById('p-emper-amt')||{}).value || '',
+      pTiers:      (typeof getTiersP==='function') ? getTiersP() : [],
+      pSavings:    (typeof getSavsP==='function') ? getSavsP() : [],
+      pLumpsums:   (typeof getLumpsumsP==='function') ? getLumpsumsP() : [],
+      pPcls:       (document.getElementById('p-pcls')||{}).value || '',
+      pAnamt:      (document.getElementById('p-anamt')||{}).value || '',
+      pAnrate:     (document.getElementById('p-anrate')||{}).value || '',
+      pDdr:        (document.getElementById('p-ddr')||{}).value || '',
+      pDdg:        (document.getElementById('p-ddg')||{}).value || '',
+      pDdinfl:     (document.getElementById('p-ddinfl')||{}).value || '',
+      pDdStages:   (typeof getDDStagesP==='function') ? getDDStagesP() : [],
+      pDdLumpsums: (typeof getDDLumpsumsP==='function') ? getDDLumpsumsP() : [],
+      pState:      (document.getElementById('p-state')||{}).value || '',
+      pStateage:   (document.getElementById('p-stateage')||{}).value || '',
+      pStateinfl:  (document.getElementById('p-stateinfl')||{}).value || '1',
+      pIncomes:    (typeof getIncsP==='function') ? getIncsP() : [],
+      pLifeexp:    (document.getElementById('p-lifeexp')||{}).value || '',
+      pModelto:    (document.getElementById('p-modelto')||{}).value || '',
       ddStages:    getDDStages(),
       ddLumpsums:  getDDLumpsums(),
     };
@@ -1056,13 +1522,14 @@ window.addEventListener('DOMContentLoaded', function() {
     if (incList) incList.innerHTML = '';
     (s.incomes || []).forEach(function(inc) {
       document.getElementById('add-inc').click();
-      var rows = document.querySelectorAll('#inc-list .irow');
+      var rows = document.querySelectorAll('#inc-list .irow4');
       var row = rows[rows.length - 1];
       if (!row) return;
       var ins = row.querySelectorAll('input');
       if (ins[0]) ins[0].value = inc.name || 'Income';
       if (ins[1]) ins[1].value = inc.amt || 0;
       if (ins[2]) ins[2].value = inc.startAge || 65;
+      if (ins[3]) ins[3].value = Math.round((inc.infl||0)*100*100)/100;
     });
 
     // Lump sums
@@ -1104,6 +1571,131 @@ window.addEventListener('DOMContentLoaded', function() {
       if (ins[0]) ins[0].value = l.label || 'Withdrawal';
       if (ins[1]) { ins[1].value = l.amt ? l.amt.toLocaleString('en-GB') : '0'; }
       if (ins[2]) ins[2].value = l.age || 70;
+    });
+
+// ---------- Partner / household state ----------
+    var isJoint = s.household === 'joint';
+    var householdBtn = document.querySelector('.mode-toggle#household-toggle .mode-btn[data-mode="' + (isJoint?'joint':'single') + '"]');
+    if (householdBtn) householdBtn.click();
+
+    setVal('p-dob', s.pDob);
+    setVal('p-retire', s.pRetire);
+    setVal('p-salary', s.pSalary);
+
+    var pPotList = document.getElementById('p-pot-list');
+    if (pPotList) {
+      pPotList.innerHTML = '';
+      if (Array.isArray(s.pPots) && s.pPots.length) {
+        s.pPots.forEach(function(x){ potRowP(x.name, x.val); });
+      } else {
+        potRowP('Pension', parseFloat(String(s.pPot||0).replace(/,/g,'')) || 0);
+      }
+      syncPotsP();
+    }
+
+    if (s.pEmpeeMode) setContribMode('p-empee', s.pEmpeeMode);
+    setVal('p-empee', s.pEmpee);
+    setVal('p-empee-amt', s.pEmpeeAmt);
+    if (s.pErMode) setContribMode('p-emper', s.pErMode);
+    setVal('p-emper', s.pEmper);
+    setVal('p-emper-amt', s.pEmperAmt);
+
+    var pTierList = document.getElementById('p-tier-list');
+    if (pTierList) pTierList.innerHTML = '';
+    (s.pTiers || []).forEach(function(t) {
+      document.getElementById('p-add-tier').click();
+      var rows = document.querySelectorAll('#p-tier-list .trow');
+      var row = rows[rows.length - 1];
+      if (!row) return;
+      var ins = row.querySelectorAll('input');
+      if (ins[0]) { ins[0].value = t.age; }
+      var modeToggle = row.querySelector('.mode-toggle');
+      if (modeToggle && t.mode) {
+        var modeBtns = modeToggle.querySelectorAll('.mode-btn');
+        modeBtns.forEach(function(b) {
+          b.classList.toggle('active', b.dataset.mode === t.mode);
+        });
+        row.dataset.tierMode = t.mode;
+      }
+      if (ins[1]) ins[1].value = t.mode === 'amt' ? Math.round(t.ee / 12) : Math.round(t.ee * 100 * 10) / 10;
+      if (ins[2]) ins[2].value = t.mode === 'amt' ? Math.round(t.er / 12) : Math.round(t.er * 100 * 10) / 10;
+    });
+
+    var pSavList = document.getElementById('p-sav-list');
+    if (pSavList) pSavList.innerHTML = '';
+    (s.pSavings || []).forEach(function(sv) {
+      document.getElementById('p-add-sav').click();
+      var rows = document.querySelectorAll('#p-sav-list .irow');
+      var row = rows[rows.length - 1];
+      if (!row) return;
+      var ins = row.querySelectorAll('input');
+      if (ins[0]) ins[0].value = sv.name || 'Savings';
+      if (ins[1]) ins[1].value = sv.val || 0;
+      if (ins[2]) ins[2].value = sv.contrib || 0;
+    });
+
+    var pLumpList = document.getElementById('p-lumpsum-list');
+    if (pLumpList) pLumpList.innerHTML = '';
+    (s.pLumpsums || []).forEach(function(l) {
+      document.getElementById('p-add-lumpsum').click();
+      var rows = document.querySelectorAll('#p-lumpsum-list .irow');
+      var row = rows[rows.length - 1];
+      if (!row) return;
+      var ins = row.querySelectorAll('input');
+      if (ins[0]) ins[0].value = l.label || 'Lump sum';
+      if (ins[1]) { ins[1].value = l.amt ? l.amt.toLocaleString('en-GB') : '0'; }
+      if (ins[2]) ins[2].value = l.age || 70;
+    });
+
+    setVal('p-pcls', s.pPcls);
+    setVal('p-anamt', s.pAnamt);
+    setVal('p-anrate', s.pAnrate);
+    setVal('p-ddr', s.pDdr);
+    setVal('p-ddg', s.pDdg);
+    setVal('p-ddinfl', s.pDdinfl);
+    setVal('p-state', s.pState);
+    setVal('p-stateage', s.pStateage);
+    setVal('p-stateinfl', s.pStateinfl);
+    setVal('p-lifeexp', s.pLifeexp);
+    setVal('p-modelto', s.pModelto);
+
+    var pDDList = document.getElementById('p-ddstage-list');
+    if (pDDList) pDDList.innerHTML = '';
+    (s.pDdStages || []).forEach(function(dd) {
+      document.getElementById('p-add-ddstage').click();
+      var rows = document.querySelectorAll('#p-ddstage-list .ddrow');
+      var row = rows[rows.length - 1];
+      if (!row) return;
+      var ins = row.querySelectorAll('input');
+      if (ins[0]) ins[0].value = dd.age || 67;
+      if (ins[1]) { ins[1].value = dd.monthly ? dd.monthly.toLocaleString('en-GB') : '0'; }
+    });
+
+    var pDDLumpList = document.getElementById('p-ddlump-list');
+    if (pDDLumpList) pDDLumpList.innerHTML = '';
+    (s.pDdLumpsums || []).forEach(function(l) {
+      document.getElementById('p-add-ddlump').click();
+      var rows = document.querySelectorAll('#p-ddlump-list .irow');
+      var row = rows[rows.length - 1];
+      if (!row) return;
+      var ins = row.querySelectorAll('input');
+      if (ins[0]) ins[0].value = l.label || 'Withdrawal';
+      if (ins[1]) { ins[1].value = l.amt ? l.amt.toLocaleString('en-GB') : '0'; }
+      if (ins[2]) ins[2].value = l.age || 70;
+    });
+
+    var pIncList = document.getElementById('p-inc-list');
+    if (pIncList) pIncList.innerHTML = '';
+    (s.pIncomes || []).forEach(function(inc) {
+      document.getElementById('p-add-inc').click();
+      var rows = document.querySelectorAll('#p-inc-list .irow4');
+      var row = rows[rows.length - 1];
+      if (!row) return;
+      var ins = row.querySelectorAll('input');
+      if (ins[0]) ins[0].value = inc.name || 'Income';
+      if (ins[1]) ins[1].value = inc.amt || 0;
+      if (ins[2]) ins[2].value = inc.startAge || 65;
+      if (ins[3]) ins[3].value = Math.round((inc.infl||0)*100*100)/100;
     });
 
     // Update client name in print header
@@ -1171,8 +1763,8 @@ window.addEventListener('DOMContentLoaded', function() {
     (s.savings||[]).forEach(function(sv){ rows.push([sv.name, sv.val, sv.contrib]); });
     rows.push([]);
     rows.push(['GUARANTEED INCOME SOURCES']);
-    rows.push(['Name','Annual amount','Start age']);
-    (s.incomes||[]).forEach(function(inc){ rows.push([inc.name, inc.amt, inc.startAge]); });
+    rows.push(['Name','Annual amount','Start age','Increase %/yr']);
+    (s.incomes||[]).forEach(function(inc){ rows.push([inc.name, inc.amt, inc.startAge, Math.round((inc.infl||0)*10000)/100]); });
     rows.push([]);
     rows.push(['LUMP SUMS']);
     rows.push(['Label','Amount','Age']);
@@ -1185,6 +1777,60 @@ window.addEventListener('DOMContentLoaded', function() {
     rows.push(['DRAWDOWN ONE-OFF WITHDRAWALS']);
     rows.push(['Description','Amount','Age']);
     (s.ddLumpsums||[]).forEach(function(l){ rows.push([l.label, l.amt, l.age]); });
+
+    if(s.household === 'joint'){
+      rows.push([]);
+      rows.push(['=== PARTNER ===']);
+      rows.push(['Date of birth', s.pDob]);
+      rows.push(['Retirement age', s.pRetire]);
+      rows.push(['Current salary', s.pSalary]);
+      rows.push(['Pension pots total', s.pPot]);
+      rows.push(['Employee contrib mode', s.pEmpeeMode]);
+      rows.push(['Employee contrib %', s.pEmpee]);
+      rows.push(['Employee contrib £/mo', s.pEmpeeAmt]);
+      rows.push(['Employer contrib mode', s.pErMode]);
+      rows.push(['Employer contrib %', s.pEmper]);
+      rows.push(['Employer contrib £/mo', s.pEmperAmt]);
+      rows.push(['PCLS %', s.pPcls]);
+      rows.push(['Annuity amount', s.pAnamt]);
+      rows.push(['Annuity rate %', s.pAnrate]);
+      rows.push(['Drawdown monthly', s.pDdr]);
+      rows.push(['Drawdown growth %', s.pDdg]);
+      rows.push(['Drawdown inflation %', s.pDdinfl]);
+      rows.push(['State pension pa', s.pState]);
+      rows.push(['State pension age', s.pStateage]);
+      rows.push(['State pension indexed', s.pStateinfl]);
+      rows.push(['Life expectancy', s.pLifeexp]);
+      rows.push(['Model to age', s.pModelto]);
+      rows.push([]);
+      rows.push(['PARTNER PENSION POTS']);
+      rows.push(['Name','Current value']);
+      (s.pPots||[]).forEach(function(pp){ rows.push([pp.name, pp.val]); });
+      rows.push([]);
+      rows.push(['PARTNER CONTRIBUTION TIERS']);
+      rows.push(['From age','Mode','Employee','Employer']);
+      (s.pTiers||[]).forEach(function(t){ rows.push([t.age, t.mode, t.ee, t.er]); });
+      rows.push([]);
+      rows.push(['PARTNER SAVINGS / ISA POTS']);
+      rows.push(['Name','Current value','Annual contrib']);
+      (s.pSavings||[]).forEach(function(sv){ rows.push([sv.name, sv.val, sv.contrib]); });
+      rows.push([]);
+      rows.push(['PARTNER GUARANTEED INCOME SOURCES']);
+      rows.push(['Name','Annual amount','Start age','Increase %/yr']);
+      (s.pIncomes||[]).forEach(function(inc){ rows.push([inc.name, inc.amt, inc.startAge, Math.round((inc.infl||0)*10000)/100]); });
+      rows.push([]);
+      rows.push(['PARTNER LUMP SUMS']);
+      rows.push(['Label','Amount','Age']);
+      (s.pLumpsums||[]).forEach(function(l){ rows.push([l.label, l.amt, l.age]); });
+      rows.push([]);
+      rows.push(['PARTNER DRAWDOWN STAGES']);
+      rows.push(['From age','Monthly amount']);
+      (s.pDdStages||[]).forEach(function(dd){ rows.push([dd.age, dd.monthly]); });
+      rows.push([]);
+      rows.push(['PARTNER DRAWDOWN ONE-OFF WITHDRAWALS']);
+      rows.push(['Description','Amount','Age']);
+      (s.pDdLumpsums||[]).forEach(function(l){ rows.push([l.label, l.amt, l.age]); });
+    }
 
     var csv = rows.map(function(r){
       return r.map(function(c){
@@ -1233,6 +1879,60 @@ window.addEventListener('DOMContentLoaded', function() {
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
 
+  // ---------- Pure calculation engine (shared by primary and partner) ----------
+  function computeAccumulation(cfg){
+    var pot=cfg.startPot, sal=cfg.salary, tc=cfg.startPot;
+    var sv=cfg.savs.map(function(s){return s.val;});
+    var aL=[], aV=[];
+    for(var i=0;i<cfg.years;i++){
+      var ca=cfg.age+i; aL.push(ca); aV.push(Math.round(pot));
+      var e2=cfg.eeMode==='pct'?cfg.eePct*sal:cfg.eeAmt;
+      var r2=cfg.erMode==='pct'?cfg.erPct*sal:cfg.erAmt;
+      for(var ti=0;ti<cfg.tiers.length;ti++){
+        if(ca>=cfg.tiers[ti].age){
+          if(cfg.tiers[ti].mode==='amt'){ e2=cfg.tiers[ti].ee; r2=cfg.tiers[ti].er; }
+          else { e2=cfg.tiers[ti].ee*sal; r2=cfg.tiers[ti].er*sal; }
+        }
+      }
+      var c=e2+r2; tc+=c;
+      var lumpThisYear=cfg.lumpsums.reduce(function(s,l){return s+(l.age===ca?l.amt:0);},0);
+      tc+=lumpThisYear;
+      pot=(pot+c+lumpThisYear)*(1+cfg.gR); sal*=(1+cfg.sR);
+      for(var si=0;si<cfg.savs.length;si++){ sv[si]=(sv[si]+cfg.savs[si].contrib)*(1+cfg.gR); }
+    }
+    aL.push(cfg.retire); aV.push(Math.round(pot));
+    var tSavs=sv.reduce(function(a,b){return a+b;},0);
+    var growth=pot-tc, realPot=pot/Math.pow(1+cfg.iR,cfg.years);
+    return { aL:aL, aV:aV, pot:pot, tc:tc, tSavs:tSavs, growth:growth, realPot:realPot };
+  }
+
+  function computeDecumulation(cfg){
+    var pcls=cfg.pot*cfg.pclsPct, rem=cfg.pot-pcls;
+    var anPot=Math.min(Math.max(0,cfg.anAmt),rem);
+    var ddPot=Math.max(0,rem-anPot);
+    var anIncome=anPot*cfg.anRate;
+
+    var dL=[], dV=[], rows=[];
+    var ddP=ddPot, exAge=null, iF=1, ddInflF=1;
+    for(var yr=0;yr<=(cfg.modelTo-cfg.retire);yr++){
+      var ca2=cfg.retire+yr; dL.push(ca2); dV.push(Math.round(Math.max(0,ddP)));
+      if(ddP<=0&&exAge===null) exAge=ca2;
+      var stY=(ca2>=cfg.stateAge)?cfg.statePa*(cfg.stateInfl?iF:1):0;
+      var exY=cfg.incs.reduce(function(s,src){ if(ca2<src.startAge) return s; return s+src.amt*Math.pow(1+(src.infl||0),ca2-src.startAge); },0);
+      var anY=anIncome*(cfg.stateInfl?iF:1);
+      var ddMonthly=cfg.ddrBaseMonthly;
+      for(var ds=0;ds<cfg.ddStages.length;ds++){ if(ca2>=cfg.ddStages[ds].age) ddMonthly=cfg.ddStages[ds].monthly; }
+      var ddr=ddMonthly*12*ddInflF;
+      var ddLumpThisYr=cfg.ddLumpsums.reduce(function(s,l){return s+(l.age===ca2?l.amt:0);},0);
+      var ddY=ddP>0?Math.min(ddr+ddLumpThisYr,ddP):0;
+      rows.push({age:ca2, st:Math.round(stY), ex:Math.round(exY), an:Math.round(anY), dd:Math.round(ddY)});
+      ddP=Math.max(0,(ddP-ddY)*(1+cfg.ddg)); iF*=(1+cfg.iR); ddInflF*=(1+cfg.ddInfl);
+    }
+    var r0=rows[0]||{dd:0,st:0,an:0,ex:0};
+    var tInc=r0.dd+r0.st+r0.an+r0.ex;
+    var tax=calcTax(tInc);
+    return { dL:dL, dV:dV, rows:rows, exAge:exAge, pcls:pcls, anPot:anPot, ddPot:ddPot, anIncome:anIncome, tInc:tInc, tax:tax };
+  }
   function calc(){document.getElementById('err-box').innerHTML='';try{_calc();}catch(e){document.getElementById('err-box').innerHTML='<div class="err">Error: '+e.message+'</div>';}}
 
   function _calc(){
@@ -1253,54 +1953,11 @@ window.addEventListener('DOMContentLoaded', function() {
     var years=Math.max(0,retire-age);
     if(retire<=age){document.getElementById('alerts').innerHTML='<div class="warn">Retirement age must be greater than current age.</div>';document.getElementById('metrics').innerHTML='';return;}
 
-    var pot=startPot,sal=salary,tc=startPot;
-    var sv=savs.map(function(s){return s.val;});
-    var aL=[],aV=[];
-    for(var i=0;i<years;i++){
-      var ca=age+i;aL.push(ca);aV.push(Math.round(pot));
-      var e2=eeMode==='pct'?eePct*sal:eeAmt;
-      var r2=erMode==='pct'?erPct*sal:erAmt;
-      for(var ti=0;ti<tiers.length;ti++){
-        if(ca>=tiers[ti].age){
-          if(tiers[ti].mode==='amt'){ e2=tiers[ti].ee; r2=tiers[ti].er; }
-          else { e2=tiers[ti].ee*sal; r2=tiers[ti].er*sal; }
-        }
-      }
-      var c=e2+r2;tc+=c;
-      var lumpThisYear=lumpsums.reduce(function(s,l){return s+(l.age===ca?l.amt:0);},0);
-      tc+=lumpThisYear;
-      pot=(pot+c+lumpThisYear)*(1+gR);sal*=(1+sR);
-      for(var si=0;si<savs.length;si++){sv[si]=(sv[si]+savs[si].contrib)*(1+gR);}
-    }
-    aL.push(retire);aV.push(Math.round(pot));
+    var A=computeAccumulation({age:age,retire:retire,salary:salary,startPot:startPot,gR:gR,iR:iR,sR:sR,eeMode:eeMode,erMode:erMode,eePct:eePct,erPct:erPct,eeAmt:eeAmt,erAmt:erAmt,tiers:tiers,savs:savs,lumpsums:lumpsums,years:years});
+    var aL=A.aL, aV=A.aV, pot=A.pot, tc=A.tc, tSavs=A.tSavs, growth=A.growth, realPot=A.realPot;
 
-    var tSavs=sv.reduce(function(a,b){return a+b;},0);
-    var growth=pot-tc,realPot=pot/Math.pow(1+iR,years);
-    var pcls=pot*pclsPct,rem=pot-pcls;
-    var anPot=Math.min(Math.max(0,anAmt),rem);
-    var ddPot=Math.max(0,rem-anPot);
-    var anIncome=anPot*anRate;
-
-    var dL=[],dV=[],rows=[];
-    var ddP=ddPot,exAge=null,iF=1,ddInflF=1;
-    for(var yr=0;yr<=(modelTo-retire);yr++){
-      var ca2=retire+yr;dL.push(ca2);dV.push(Math.round(Math.max(0,ddP)));
-      if(ddP<=0&&exAge===null)exAge=ca2;
-      var stY=(ca2>=stateAge)?statePa*(stateInfl?iF:1):0;
-      var exY=incs.reduce(function(s,src){if(ca2<src.startAge)return s;return s+src.amt*Math.pow(1+(src.infl||0),ca2-src.startAge);},0);
-      var anY=anIncome*(stateInfl?iF:1);
-      var ddMonthly=ddrBaseMonthly;
-      for(var ds=0;ds<ddStages.length;ds++){if(ca2>=ddStages[ds].age)ddMonthly=ddStages[ds].monthly;}
-      var ddr=ddMonthly*12*ddInflF;
-      var ddLumpThisYr=ddLumpsums.reduce(function(s,l){return s+(l.age===ca2?l.amt:0);},0);
-      var ddY=ddP>0?Math.min(ddr+ddLumpThisYr,ddP):0;
-      rows.push({age:ca2,st:Math.round(stY),ex:Math.round(exY),an:Math.round(anY),dd:Math.round(ddY),lump:Math.round(Math.min(ddLumpThisYr,Math.max(0,ddP-Math.min(ddr,ddP))))});
-      ddP=Math.max(0,(ddP-ddY)*(1+ddg));iF*=(1+iR);ddInflF*=(1+ddInfl);
-    }
-
-    var r0=rows[0]||{dd:0,st:0,an:0,ex:0};
-    var tInc=r0.dd+r0.st+r0.an+r0.ex;
-    var tax=calcTax(tInc);
+    var D=computeDecumulation({pot:pot,retire:retire,modelTo:modelTo,pclsPct:pclsPct,anAmt:anAmt,anRate:anRate,ddrBaseMonthly:ddrBaseMonthly,ddg:ddg,ddInfl:ddInfl,ddStages:ddStages,ddLumpsums:ddLumpsums,statePa:statePa,stateAge:stateAge,stateInfl:stateInfl,incs:incs});
+    var dL=D.dL, dV=D.dV, rows=D.rows, exAge=D.exAge, pcls=D.pcls, anPot=D.anPot, ddPot=D.ddPot, anIncome=D.anIncome, tInc=D.tInc, tax=D.tax;
 
     document.getElementById('tax-summary').innerHTML=
       '<div class="tax-card"><div class="tax-l">Gross income</div><div class="tax-v">'+fmtF(tax.gross)+'</div></div>'+
@@ -1403,7 +2060,109 @@ window.addEventListener('DOMContentLoaded', function() {
       {label:'10th %ile',data:p10,fill:'-1',backgroundColor:'rgba(201,168,76,0.10)',borderColor:'rgba(29,53,59,0.12)',borderWidth:1,pointRadius:0,tension:0.3},
       {label:'Median',data:p50,fill:false,borderColor:'#1D353B',borderWidth:2.5,pointRadius:0,tension:0.3}
     ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(c){return' '+c.dataset.label+': '+fmtM(c.raw);}}}},scales:{x:{grid:gc,ticks:xT,title:{display:true,text:'Age',color:'#999',font:{size:11}}},y:{grid:gc,ticks:yT}}}});
+
+    if(document.body.classList.contains('joint-on')) calcPartnerAndHousehold(A, D, {age:age,retire:retire,tc:tc,growth:growth,tSavs:tSavs,anPot:anPot,statePa:statePa,stateAge:stateAge,lifeexp:lifeexp,exAge:exAge,rows:rows,dL:dL,dV:dV,tInc:tInc,tax:tax,pcls:pcls,ddPot:ddPot,modelTo:modelTo});
   }
+  function calcPartnerAndHousehold(A, D, ctx){
+    var pDob = document.getElementById('p-dob').value;
+    var ageP = ageFromDOB(pDob), retireP = gv('p-retire') || 67, salaryP = gv('p-salary') || 35000;
+    var startPotP = gv('p-pot');
+    var gR = gv('growth')/100, iR = gv('infl')/100, sR = gv('salr')/100;
+
+    var eeModeP = getContribMode('p-empee'), erModeP = getContribMode('p-emper');
+    var eePctP = gv('p-empee')/100, erPctP = gv('p-emper')/100;
+    var eeAmtP = gv('p-empee-amt')*12, erAmtP = gv('p-emper-amt')*12;
+
+    var pclsPctP = gv('p-pcls')/100, anAmtP = gv('p-anamt'), anRateP = gv('p-anrate')/100;
+    var ddrBaseMonthlyP = gv('p-ddr'), ddgP = gv('p-ddg')/100, ddInflP = gv('p-ddinfl')/100;
+    var ddStagesP = getDDStagesP(), ddLumpsumsP = getDDLumpsumsP();
+    var statePaP = gv('p-state'), stateAgeP = gv('p-stateage') || 67;
+    var stateInflP = (document.getElementById('p-stateinfl')||{}).value === '1';
+    var lifeexpP = gv('p-lifeexp') || 88, modelToP = gv('p-modelto') || 100;
+    var tiersP = getTiersP(), savsP = getSavsP(), incsP = getIncsP(), lumpsumsP = getLumpsumsP();
+    var yearsP = Math.max(0, retireP - ageP);
+
+    var houseAccumBlock = document.getElementById('household-accum-block');
+    if(retireP <= ageP){
+      if(houseAccumBlock) houseAccumBlock.innerHTML = '<div class="warn">Partner&#39;s retirement age must be greater than their current age.</div>';
+      return;
+    }
+
+    var AP = computeAccumulation({age:ageP,retire:retireP,salary:salaryP,startPot:startPotP,gR:gR,iR:iR,sR:sR,eeMode:eeModeP,erMode:erModeP,eePct:eePctP,erPct:erPctP,eeAmt:eeAmtP,erAmt:erAmtP,tiers:tiersP,savs:savsP,lumpsums:lumpsumsP,years:yearsP});
+    var DP = computeDecumulation({pot:AP.pot,retire:retireP,modelTo:modelToP,pclsPct:pclsPctP,anAmt:anAmtP,anRate:anRateP,ddrBaseMonthly:ddrBaseMonthlyP,ddg:ddgP,ddInfl:ddInflP,ddStages:ddStagesP,ddLumpsums:ddLumpsumsP,statePa:statePaP,stateAge:stateAgeP,stateInfl:stateInflP,incs:incsP});
+
+    // ---- Household accumulation summary ----
+    var combinedPot = A.pot + AP.pot;
+    document.getElementById('household-accum-metrics').innerHTML =
+      '<div class="metric"><p class="ml">Person 1 pot at '+ctx.retire+'</p><p class="mv">'+fmtM(A.pot)+'</p><p class="ms">Age '+ctx.retire+'</p></div>'+
+      '<div class="metric"><p class="ml">Person 2 pot at '+retireP+'</p><p class="mv">'+fmtM(AP.pot)+'</p><p class="ms">Age '+retireP+'</p></div>'+
+      '<div class="metric"><p class="ml">Combined pension wealth</p><p class="mv">'+fmtM(combinedPot)+'</p><p class="ms">Sum of both pots</p></div>';
+
+    // ---- Household decumulation: calendar-year alignment ----
+    var currentYear = new Date().getFullYear();
+    var map = {};
+    ctx.rows.forEach(function(r){
+      var cy = currentYear + (r.age - ctx.age);
+      if(!map[cy]) map[cy] = {p1:0,p2:0};
+      map[cy].p1 = r.dd + r.st + r.an + r.ex;
+    });
+    DP.rows.forEach(function(r){
+      var cy = currentYear + (r.age - ageP);
+      if(!map[cy]) map[cy] = {p1:0,p2:0};
+      map[cy].p2 = r.dd + r.st + r.an + r.ex;
+    });
+    var years = Object.keys(map).map(Number).sort(function(a,b){return a-b;});
+    var hRows = years.map(function(y){ return {year:y, p1:Math.round(map[y].p1), p2:Math.round(map[y].p2), total:Math.round(map[y].p1+map[y].p2)}; });
+
+    var bothRetiredRow = hRows.find(function(r){ return r.p1>0 && r.p2>0; }) || hRows[hRows.length-1] || {p1:0,p2:0,total:0};
+    document.getElementById('household-decum-metrics').innerHTML =
+      '<div class="metric"><p class="ml">Person 1 income at '+ctx.retire+'</p><p class="mv">'+fmtM(ctx.tInc)+'</p><p class="ms">Net: '+fmtF(Math.round(ctx.tax.net/12))+'/mo</p></div>'+
+      '<div class="metric"><p class="ml">Person 2 income at '+retireP+'</p><p class="mv">'+fmtM(DP.tInc)+'</p><p class="ms">Net: '+fmtF(Math.round(DP.tax.net/12))+'/mo</p></div>'+
+      '<div class="metric"><p class="ml">Household income once both retired</p><p class="mv">'+fmtM(bothRetiredRow.total)+'</p><p class="ms">Combined, from '+bothRetiredRow.year+'</p></div>';
+
+    var houseNoteEl = document.getElementById('household-note');
+    if(houseNoteEl) houseNoteEl.textContent = 'Shown by calendar year to align two different ages. Person 1 retires in '+(currentYear+(ctx.retire-ctx.age))+'; Person 2 retires in '+(currentYear+(retireP-ageP))+'.';
+
+    var gc={color:'rgba(0,0,0,0.05)'};
+    var yT={color:'#999',callback:function(v){return fmtM(v);},maxTicksLimit:5,font:{size:11}};
+    var xT={color:'#999',maxTicksLimit:8,font:{size:11}};
+    mkChart('cHousehold',{type:'bar',data:{labels:hRows.map(function(r){return r.year;}),datasets:[
+      {label:'Person 1',data:hRows.map(function(r){return r.p1;}),backgroundColor:'rgba(29,53,59,0.75)',stack:'s'},
+      {label:'Person 2',data:hRows.map(function(r){return r.p2;}),backgroundColor:'rgba(201,168,76,0.85)',stack:'s'}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(c){return' '+c.dataset.label+': '+fmtF(c.raw);},footer:function(items){var t=items.reduce(function(s,i){return s+i.parsed.y;},0);return 'Household total: '+fmtF(t);}}}},scales:{x:{stacked:true,grid:gc,ticks:xT,title:{display:true,text:'Year',color:'#999',font:{size:11}}},y:{stacked:true,grid:gc,ticks:yT}}}});
+
+    // ---- Partner's own tax + drawdown pot chart + alert ----
+    var tsp = document.getElementById('tax-summary-p');
+    if(tsp) tsp.innerHTML =
+      '<div class="tax-card"><div class="tax-l">Gross income</div><div class="tax-v">'+fmtF(DP.tax.gross)+'</div></div>'+
+      '<div class="tax-card"><div class="tax-l">Est. income tax</div><div class="tax-v">'+fmtF(DP.tax.tax)+'</div></div>'+
+      '<div class="tax-card"><div class="tax-l">Net income</div><div class="tax-v">'+fmtF(DP.tax.net)+'</div></div>'+
+      '<div class="tax-card"><div class="tax-l">Effective rate</div><div class="tax-v">'+DP.tax.rate.toFixed(1)+'%</div></div>';
+
+    var exIdxP = DP.exAge ? DP.dL.indexOf(DP.exAge) : -1;
+    var bgsP = DP.dV.map(function(_,i){return(exIdxP<0||i<exIdxP)?'rgba(201,168,76,0.75)':'rgba(226,75,74,0.55)';});
+    var xAxP = {grid:gc,ticks:xT,title:{display:true,text:'Age',color:'#999',font:{size:11}}};
+    mkChart('cDecumP',{type:'bar',data:{labels:DP.dL,datasets:[{label:'Partner drawdown pot',data:DP.dV,backgroundColor:bgsP,borderWidth:0,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return' '+fmtF(c.raw);}}}},scales:{x:xAxP,y:{grid:gc,ticks:yT}}}});
+
+    var alertsP = document.getElementById('alerts-p');
+    if(alertsP) alertsP.innerHTML = (DP.exAge && DP.exAge<=lifeexpP)
+      ? '<div class="warn">&#9888; Partner&#39;s drawdown pot runs out at age '+DP.exAge+', before their life expectancy of '+lifeexpP+'.</div>'
+      : '<div class="good">&#10003; Partner&#39;s drawdown pot survives to age '+(DP.exAge||modelToP)+' on current settings.</div>';
+
+    document.getElementById('tax-p1-badge').style.display = '';
+    document.getElementById('decum-p1-badge').style.display = '';
+  }
+
+  document.getElementById('household-toggle').querySelectorAll('.mode-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.getElementById('household-toggle').querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      var joint = btn.dataset.mode === 'joint';
+      document.body.classList.toggle('joint-on', joint);
+      document.getElementById('household-status-note').textContent = joint ? 'Modelling for two people — combined household results shown below' : 'Modelling for one person';
+      calc();
+    });
+  });
 
   document.getElementById('decum-toggle').addEventListener('click', function(){
     var on = document.body.classList.toggle('decum-on');
@@ -1421,6 +2180,8 @@ window.addEventListener('DOMContentLoaded', function() {
   // Seed one pension pot row
   potRow('Pension', 20000);
   syncPots();
+  potRowP('Pension', 15000);
+  syncPotsP();
 
   // Initial population of age/SPA/life-expectancy labels from default DOB
   (function(){
