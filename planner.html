@@ -349,6 +349,10 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500">Drawdown stages — change monthly amount at a later age</p>
     <div id="ddstage-list"></div>
     <button class="abtn" id="add-ddstage">+ Add stage</button>
+    <div class="divider"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500">One-off withdrawals from drawdown &mdash; ad hoc lump sums taken from the pot at any age</p>
+    <div id="ddlump-list"></div>
+    <button class="abtn" id="add-ddlump">+ Add one-off withdrawal</button>
   </div>
 
   <div class="sec">
@@ -654,7 +658,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var labelInp=document.createElement('input');labelInp.type='text';labelInp.value='Inheritance';
     var amtInp=document.createElement('input');amtInp.type='text';amtInp.value='10,000';amtInp.className='currency-input';
     amtInp.addEventListener('blur',function(){var raw=parseFloat(amtInp.value.replace(/,/g,''))||0;amtInp.value=raw.toLocaleString('en-GB');});
-    amtInp.addEventListener('focus',function(){amtInp.value=amtInp.value.replace(/,/g,'');});
+    amtInp.addEventListener('focus',function(){amtInp.value=amtInp.value.replace(/,/g,'');amtInp.select();});
     var ageInp=document.createElement('input');ageInp.type='number';ageInp.value=String((gv('age')||35)+3);ageInp.min='18';ageInp.max='85';
     var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
     delBtn.addEventListener('click',function(){d.remove();calc();});
@@ -664,6 +668,25 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(delBtn);
     d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
     document.getElementById('lumpsum-list').appendChild(d);calc();
+  });
+
+  document.getElementById('add-ddlump').addEventListener('click',function(){
+    lcnt++;var id='ddlump-'+lcnt;
+    var d=document.createElement('div');d.id=id;d.className='irow';
+    function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
+    var labelInp=document.createElement('input');labelInp.type='text';labelInp.value='New car';
+    var amtInp=document.createElement('input');amtInp.type='text';amtInp.value='10,000';amtInp.className='currency-input';
+    amtInp.addEventListener('blur',function(){var raw=parseFloat(amtInp.value.replace(/,/g,''))||0;amtInp.value=raw.toLocaleString('en-GB');});
+    amtInp.addEventListener('focus',function(){amtInp.value=amtInp.value.replace(/,/g,'');amtInp.select();});
+    var ageInp=document.createElement('input');ageInp.type='number';ageInp.value=String((gv('retire')||67)+2);ageInp.min='50';ageInp.max='120';
+    var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
+    delBtn.addEventListener('click',function(){d.remove();calc();});
+    d.appendChild(mkf('Description',labelInp));
+    d.appendChild(mkf('Amount (£)',amtInp));
+    d.appendChild(mkf('At age',ageInp));
+    d.appendChild(delBtn);
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    document.getElementById('ddlump-list').appendChild(d);calc();
   });
 
   document.getElementById('add-ddstage').addEventListener('click', function() {
@@ -694,7 +717,7 @@ window.addEventListener('DOMContentLoaded', function() {
     amtInp.value = '800';
     amtInp.className = 'currency-input';
     amtInp.addEventListener('blur', function() { var raw = parseFloat(amtInp.value.replace(/,/g,'')) || 0; amtInp.value = raw.toLocaleString('en-GB'); });
-    amtInp.addEventListener('focus', function() { amtInp.value = amtInp.value.replace(/,/g,''); });
+    amtInp.addEventListener('focus', function() { amtInp.value = amtInp.value.replace(/,/g,''); amtInp.select(); });
     amtInp.addEventListener('input', calc);
     amtDiv.appendChild(amtLbl);
     amtDiv.appendChild(amtInp);
@@ -754,6 +777,7 @@ window.addEventListener('DOMContentLoaded', function() {
   function getSavs(){return Array.from(document.querySelectorAll('#sav-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{name:ins[0].value||'Savings',val:+ins[1].value||0,contrib:+ins[2].value||0};});}
   function getIncs(){return Array.from(document.querySelectorAll('#inc-list .irow4')).map(function(r){var ins=r.querySelectorAll('input');return{name:ins[0].value||'Income',amt:+ins[1].value||0,startAge:+ins[2].value||0,infl:(+ins[3].value||0)/100};});}
   function getDDStages(){return Array.from(document.querySelectorAll('#ddstage-list .ddrow')).map(function(r){var ins=r.querySelectorAll('input');return{age:+ins[0].value||99,monthly:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0)};}).sort(function(a,b){return a.age-b.age;});}
+  function getDDLumpsums(){return Array.from(document.querySelectorAll('#ddlump-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{label:ins[0].value||'Withdrawal',amt:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0),age:+ins[2].value||99};});}
   function getLumpsums(){return Array.from(document.querySelectorAll('#lumpsum-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{label:ins[0].value||'Lump sum',amt:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0),age:+ins[2].value||99};});}
   function getContribMode(target){var t=document.querySelector('.mode-toggle[data-target="'+target+'"]');if(!t)return'pct';var active=t.querySelector('.mode-btn.active');return active?active.dataset.mode:'pct';}
 
@@ -848,7 +872,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var valInp=document.createElement('input'); valInp.type='text'; valInp.className='currency-input';
     valInp.value=(val===undefined?20000:val).toLocaleString('en-GB');
     valInp.addEventListener('blur',function(){var raw=parseFloat(valInp.value.replace(/,/g,''))||0;valInp.value=raw.toLocaleString('en-GB');});
-    valInp.addEventListener('focus',function(){valInp.value=valInp.value.replace(/,/g,'');});
+    valInp.addEventListener('focus',function(){valInp.value=valInp.value.replace(/,/g,'');valInp.select();});
     var del=document.createElement('button'); del.className='dbtn'; del.innerHTML='&#215;';
     del.addEventListener('click',function(){ d.remove(); syncPots(); });
     d.appendChild(mkf('Provider / name',nameInp));
@@ -915,6 +939,7 @@ window.addEventListener('DOMContentLoaded', function() {
       incomes:     getIncs(),
       lumpsums:    getLumpsums(),
       ddStages:    getDDStages(),
+      ddLumpsums:  getDDLumpsums(),
     };
   }
 
@@ -1067,6 +1092,20 @@ window.addEventListener('DOMContentLoaded', function() {
       if (ins[1]) { ins[1].value = dd.monthly ? dd.monthly.toLocaleString('en-GB') : '0'; }
     });
 
+    // Drawdown one-off withdrawals
+    var ddLumpList = document.getElementById('ddlump-list');
+    if (ddLumpList) ddLumpList.innerHTML = '';
+    (s.ddLumpsums || []).forEach(function(l) {
+      document.getElementById('add-ddlump').click();
+      var rows = document.querySelectorAll('#ddlump-list .irow');
+      var row = rows[rows.length - 1];
+      if (!row) return;
+      var ins = row.querySelectorAll('input');
+      if (ins[0]) ins[0].value = l.label || 'Withdrawal';
+      if (ins[1]) { ins[1].value = l.amt ? l.amt.toLocaleString('en-GB') : '0'; }
+      if (ins[2]) ins[2].value = l.age || 70;
+    });
+
     // Update client name in print header
     var printDate = document.getElementById('print-date');
     if (printDate && s.clientName) printDate.textContent = s.clientName;
@@ -1142,6 +1181,10 @@ window.addEventListener('DOMContentLoaded', function() {
     rows.push(['DRAWDOWN STAGES']);
     rows.push(['From age','Monthly amount']);
     (s.ddStages||[]).forEach(function(dd){ rows.push([dd.age, dd.monthly]); });
+    rows.push([]);
+    rows.push(['DRAWDOWN ONE-OFF WITHDRAWALS']);
+    rows.push(['Description','Amount','Age']);
+    (s.ddLumpsums||[]).forEach(function(l){ rows.push([l.label, l.amt, l.age]); });
 
     var csv = rows.map(function(r){
       return r.map(function(c){
@@ -1202,7 +1245,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var eeAmt=gv('empee-amt')*12, erAmt=gv('emper-amt')*12;
 
     var pclsPct=gv('pcls')/100,anAmt=gv('anamt'),anRate=gv('anrate')/100;
-    var ddrBaseMonthly=gv('ddr'),ddg=gv('ddg')/100,ddInfl=gv('ddinfl')/100,ddStages=getDDStages();
+    var ddrBaseMonthly=gv('ddr'),ddg=gv('ddg')/100,ddInfl=gv('ddinfl')/100,ddStages=getDDStages(),ddLumpsums=getDDLumpsums();
     var statePa=gv('state'),stateAge=gv('stateage')||67;
     var stateInfl=document.getElementById('stateinfl').value==='1';
     var lifeexp=gv('lifeexp')||87,modelTo=gv('modelto')||100;
@@ -1249,8 +1292,9 @@ window.addEventListener('DOMContentLoaded', function() {
       var ddMonthly=ddrBaseMonthly;
       for(var ds=0;ds<ddStages.length;ds++){if(ca2>=ddStages[ds].age)ddMonthly=ddStages[ds].monthly;}
       var ddr=ddMonthly*12*ddInflF;
-      var ddY=ddP>0?Math.min(ddr,ddP):0;
-      rows.push({age:ca2,st:Math.round(stY),ex:Math.round(exY),an:Math.round(anY),dd:Math.round(ddY)});
+      var ddLumpThisYr=ddLumpsums.reduce(function(s,l){return s+(l.age===ca2?l.amt:0);},0);
+      var ddY=ddP>0?Math.min(ddr+ddLumpThisYr,ddP):0;
+      rows.push({age:ca2,st:Math.round(stY),ex:Math.round(exY),an:Math.round(anY),dd:Math.round(ddY),lump:Math.round(Math.min(ddLumpThisYr,Math.max(0,ddP-Math.min(ddr,ddP))))});
       ddP=Math.max(0,(ddP-ddY)*(1+ddg));iF*=(1+iR);ddInflF*=(1+ddInfl);
     }
 
@@ -1337,7 +1381,8 @@ window.addEventListener('DOMContentLoaded', function() {
         var mddMonthly=ddrBaseMonthly;
         for(var mds=0;mds<ddStages.length;mds++){if(mca>=ddStages[mds].age)mddMonthly=ddStages[mds].monthly;}
         var mAnnual=mddMonthly*12*mddInflF;
-        var mddY=mddP>0?Math.min(mAnnual,mddP):0;
+        var mLumpThisYr=ddLumpsums.reduce(function(s,l){return s+(l.age===mca?l.amt:0);},0);
+        var mddY=mddP>0?Math.min(mAnnual+mLumpThisYr,mddP):0;
         mddP=Math.max(0,(mddP-mddY)*(1+(gR+(Math.random()-0.5)*0.06)));
         miF*=(1+iR);mddInflF*=(1+ddInfl);yv.push(Math.round(mddP));
       }
