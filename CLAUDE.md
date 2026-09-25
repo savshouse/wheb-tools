@@ -26,6 +26,7 @@ Branded single-file HTML calculator tools for UK financial advisers, published a
 | WHEB Tools Hub | https://cswm.me.uk/tools | `wheb-tools-hub.html` |
 | TRS Generator | cswm.me.uk (not yet in hub) | source was `trs-src2.html` |
 | PDF Password Protector | TODO | TODO |
+| Salary Exchange Calculator | https://cswm.me.uk/salexchange | `salexchange.html` |
 
 - `retirement-planner.html` is an **earlier, different tool** — do not confuse it with `planner.html`.
 
@@ -137,6 +138,16 @@ Common bug patterns already hit (check for these):
 - Engine: `qrcode-generator` from jsdelivr (switched from `qrcodejs`, which didn't render).
 - Style/Frame tabs live in a permanently visible section below the type-specific inputs; `wTab` is scoped to its parent `.sec` so tab groups don't interfere. Labels are set in the Frame tab only.
 - Apple Wallet `.pkpass` is **not possible** client-side (needs server-side Apple signing).
+
+### Salary Exchange Calculator (`salexchange.html`)
+
+- Built from the Scottish Widows adviser salary exchange spreadsheet (`salary-exchange-calculator-25-26.xlsm`) — its `Parameters`/`Calculations` sheets are the source of truth for the 2025/26 UK & Scottish tax bands and NI thresholds used here; the multi-member/bulk-employer sheets in that workbook were deliberately **not** ported (individual-employee tool only, by design).
+- **Dynamic scenario builder:** one shared "Employee & salary details" block (employer name, UK/Scottish, above-SPA, salary, bonus) plus any number of independently-configured "structure" cards, each with its own method (Salary Sacrifice / Net Pay / Relief at Source), salary basis (Basic salary / Qualifying earnings / Total earnings) and amount type (%/£pm/£pyr) — any combination of any of these can be compared side by side, plus a fixed "No contribution" reference column.
+- **Engine (`computeScenario`):** Salary Sacrifice reduces salary before both tax and NI (employer NI saving optionally reinvested 0/25/50/75/100%); Net Pay reduces taxable income only (no NI saving); Relief at Source is calculated on the **full, unreduced salary** for take-home pay (net contribution = gross × 0.8 paid from net pay) — any higher/additional-rate top-up relief beyond the mechanical 20% is computed but shown as a **separate, clearly-caveated line** ("may be claimable via Self Assessment/tax code adjustment"), never folded into take-home pay, since it isn't automatic. Verified against hand-calculated reference figures in a Node test harness before shipping (band-walk tax, NI thresholds, QE banding, above-SPA, bonus sacrifice, RAS-vs-Net-Pay equivalence).
+- 2025/26 only (no year selector) — UK PA taper (£100k/£12,570), UK bands (£37,700/£74,870 widths, 20/40/45%), Scottish bands (starter/basic/intermediate/higher/advanced/top, 19/20/21/42/45/48%), employee NI (£12,570 threshold, 8%/2%), employer NI (£5,000 threshold, 15% — the post-April-2025 rate).
+- Soft guardrail alerts (not hard blocks): sacrifice >80% of salary; resulting pay below the NLW-based `£22,308` floor (flagged to verify against the current published rate); total pension contribution above the standard £60k Annual Allowance (links conceptually to the Annual Allowance Calculator).
+- Comparison table (grouped Pay/Pension/Employer rows, one column per structure) plus a Chart.js stacked bar (take-home / employee pension / employer pension per structure). "Pension £ per £1 take-home given up" is the headline value-for-money metric.
+- Not modelled (deliberate): impact of reduced salary on other salary-linked benefits (life cover, mortgage affordability, statutory pay, means-tested benefits, student loan), multi-employee/bulk employer estimator, prior tax years.
 
 ### WHEB Tools Hub (`wheb-tools-hub.html`)
 
