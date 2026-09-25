@@ -149,9 +149,10 @@ Common bug patterns already hit (check for these):
 - Comparison table (grouped Pay/Pension/Employer rows, one column per structure) plus a Chart.js stacked bar (take-home / employee pension / employer pension per structure). "Pension £ per £1 take-home given up" is the headline value-for-money metric.
 - Not modelled (deliberate): impact of reduced salary on other salary-linked benefits (life cover, mortgage affordability, statutory pay, means-tested benefits, student loan), multi-employee/bulk employer estimator, prior tax years.
 
-### WHEB Tools Hub (`wheb-tools-hub.html`)
+### WHEB Tools Hub (`tools.html`)
 
-- `TOOLS` array: add a tool by copying an object `{title, url, description, tags[], icon (SVG path d attr), badge}`.
+- `TOOLS` array: add a tool by copying an object `{title, url, description, tags[], icon (SVG path d attr), version, lastUpdated}`.
+- `version` (e.g. `'v1.0'`) renders as a chip on the card; `lastUpdated` (`'YYYY-MM-DD'`) renders as a "Last updated: …" line at the bottom of the card. Both are set by hand — bump `version` and `lastUpdated` together whenever a tool gets a meaningful update. There is no "new"/"updated" badge any more (it never expired on its own, so it was replaced with this).
 - Real-time search plus tag filter auto-built from tags.
 
 ### PDF Password Protector (`pdfprotector.html`)

@@ -260,9 +260,7 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .tc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
 .tc-icon{width:40px;height:40px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .tc-icon svg{width:20px;height:20px;fill:var(--gold-light)}
-.tc-badge{font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:20px}
-.tc-badge.new{background:#d1fae5;color:#065f46}
-.tc-badge.updated{background:#fff3cd;color:#856404}
+.tc-version{font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 9px;border-radius:20px;background:var(--offwhite);color:var(--muted);border:1px solid var(--border);flex-shrink:0}
 
 .tc-title{font-size:15px;font-weight:700;color:var(--navy);line-height:1.3}
 .tc-desc{font-size:12px;color:var(--muted);line-height:1.6;flex:1}
@@ -270,6 +268,7 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .tc-tag{font-size:10px;font-weight:600;color:var(--muted);background:var(--offwhite);padding:2px 8px;border-radius:20px;border:1px solid var(--border)}
 .tc-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--navy);margin-top:.25rem}
 .tc-link svg{width:13px;height:13px;fill:currentColor}
+.tc-updated{font-size:10.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:.6rem;margin-top:-.25rem}
 
 .no-results{text-align:center;padding:3rem;color:var(--muted);font-size:14px;display:none}
 .no-results.show{display:block}
@@ -360,7 +359,10 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 //   description — one or two sentences shown on the card
 //   tags        — array of category strings (used for filtering)
 //   icon        — SVG path 'd' attribute (material icons work well)
-//   badge       — 'new', 'updated', or '' for none
+//   version     — e.g. 'v1.0' — shown as a small chip on the card. Bump
+//                 this by hand whenever you make a meaningful update.
+//   lastUpdated — 'YYYY-MM-DD' — shown at the bottom of the card. Update
+//                 this alongside version whenever you edit the tool.
 // =====================================================================
 var TOOLS = [
   {
@@ -369,7 +371,8 @@ var TOOLS = [
     description: 'Calculate carry forward, tapered Annual Allowance and MPAA interactions. Includes full taper income calculator, DB/DC split inputs, cumulative AA tracking and taxable excess analysis.',
     tags: ['Pensions', 'Tax Planning'],
     icon: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z',
-    badge: 'updated',
+    version: 'v1.0',
+    lastUpdated: '2026-07-29',
   },
   {
     title: 'Retirement Planner',
@@ -377,7 +380,8 @@ var TOOLS = [
     description: 'Full accumulation and decumulation modelling with Monte Carlo analysis, drawdown stages, annuity comparisons, state pension integration and tax estimates.',
     tags: ['Pensions', 'Retirement'],
     icon: 'M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z',
-    badge: '',
+    version: 'v1.0',
+    lastUpdated: '2026-09-25',
   },
   {
     title: 'QR Code Generator',
@@ -385,7 +389,8 @@ var TOOLS = [
     description: 'Generate branded QR codes for URLs, contact details, email, phone, Wi-Fi and more. 12 QR types with full WHEB branding and instant download.',
     tags: ['Utilities'],
     icon: 'M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2zm2 2h2v2h-2zm2-2h2v2h-2zm-2 4h2v2h-2zm2 0h2v2h-2zm2-4h2v2h-2zm-4 4h2v2h-2zm4 2h2v2h-2z',
-    badge: '',
+    version: 'v1.0',
+    lastUpdated: '2026-09-25',
   },
   {
     title: 'PDF Password Protector',
@@ -393,7 +398,8 @@ var TOOLS = [
     description: 'Add password protection to PDF documents entirely in-browser — nothing is uploaded. Useful for sending statements or documents containing salary or personal data securely.',
     tags: ['Utilities'],
     icon: 'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10z',
-    badge: 'new',
+    version: 'v1.0',
+    lastUpdated: '2026-09-25',
   },
   {
     title: 'Salary Exchange Calculator',
@@ -401,7 +407,8 @@ var TOOLS = [
     description: 'Compare gross salary sacrifice, net pay and relief-at-source pension contributions side by side. Model any combination of salary basis, method and amount to show the true gross vs net cost.',
     tags: ['Pensions', 'Tax Planning'],
     icon: 'M9 3L5 6.99h3V14h2V6.99h3L9 3zm7 14.01V10h-2v7.01h-3L15 21l4-3.99h-3z',
-    badge: 'new',
+    version: 'v1.0',
+    lastUpdated: '2026-09-25',
   },
   // ── ADD NEW TOOLS ABOVE THIS LINE ──────────────────────────────────────
   // Example:
@@ -411,7 +418,8 @@ var TOOLS = [
   //   description: 'Generate personalised total reward statements for employees.',
   //   tags: ['Employee Benefits'],
   //   icon: 'M20 6h-2.18c.07-.44.18-.86.18-1a3 3 0 00-6 0 ... ',
-  //   badge: 'new',
+  //   version: 'v1.0',
+  //   lastUpdated: '2026-01-01',
   // },
 ];
 
@@ -466,13 +474,20 @@ function filterTools() {
   noRes.classList.toggle('show', visible === 0);
 }
 
+function formatToolDate(iso) {
+  var parts = (iso || '').split('-');
+  if (parts.length !== 3) return iso;
+  var d = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+}
+
 function renderTools() {
   var grid = document.getElementById('tools-grid');
   grid.innerHTML = '';
 
   TOOLS.forEach(function(tool) {
-    var badgeHTML = tool.badge
-      ? '<span class="tc-badge ' + tool.badge + '">' + tool.badge.toUpperCase() + '</span>'
+    var versionHTML = tool.version
+      ? '<span class="tc-version">' + tool.version + '</span>'
       : '<span></span>';
 
     var tagsHTML = tool.tags.map(function(t) {
@@ -489,14 +504,15 @@ function renderTools() {
     card.innerHTML =
       '<div class="tc-header">' +
         '<div class="tc-icon"><svg viewBox="0 0 24 24"><path d="' + tool.icon + '"/></svg></div>' +
-        badgeHTML +
+        versionHTML +
       '</div>' +
       '<div class="tc-title">' + tool.title + '</div>' +
       '<div class="tc-desc">' + tool.description + '</div>' +
       '<div class="tc-tags">' + tagsHTML + '</div>' +
       '<div class="tc-link">Open tool ' +
         '<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>' +
-      '</div>';
+      '</div>' +
+      (tool.lastUpdated ? '<div class="tc-updated">Last updated: ' + formatToolDate(tool.lastUpdated) + '</div>' : '');
 
     grid.appendChild(card);
   });
