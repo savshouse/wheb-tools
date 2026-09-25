@@ -25,7 +25,7 @@ Branded single-file HTML calculator tools for UK financial advisers, published a
 | QR Code Generator | https://cswm.me.uk/qrgenerator | `qrgenerator.html` |
 | WHEB Tools Hub | https://cswm.me.uk/tools | `wheb-tools-hub.html` |
 | TRS Generator | cswm.me.uk (not yet in hub) | source was `trs-src2.html` |
-| PDF Password Protector | TODO | TODO |
+| PDF Password Protector | https://cswm.me.uk/pdfprotector | `pdfprotector.html` |
 | Salary Exchange Calculator | https://cswm.me.uk/salexchange | `salexchange.html` |
 
 - `retirement-planner.html` is an **earlier, different tool** — do not confuse it with `planner.html`.
@@ -154,9 +154,10 @@ Common bug patterns already hit (check for these):
 - `TOOLS` array: add a tool by copying an object `{title, url, description, tags[], icon (SVG path d attr), badge}`.
 - Real-time search plus tag filter auto-built from tags.
 
-### PDF Password Protector
+### PDF Password Protector (`pdfprotector.html`)
 
-- TODO: file name, URL, library used, and how it works.
+- Entirely client-side: uses `@cantoo/pdf-lib` (jsdelivr CDN) to load the uploaded PDF and call `pdfDoc.encrypt({ userPassword, ownerPassword })` (same password for both), then triggers a download of the encrypted file. Nothing is uploaded to a server.
+- Now listed in the Tools Hub (`tools.html`).
 
 ---
 
@@ -169,7 +170,7 @@ Common bug patterns already hit (check for these):
 
 ## Roadmap
 
-- Add TRS Generator (and PDF Password Protector, if not already there) to the `TOOLS` array in `wheb-tools-hub.html`.
+- Add TRS Generator to the `TOOLS` array in `tools.html` (PDF Password Protector done).
 - Verify the live `planner.html` matches the feature list above.
 - Mortgage suitability letter automation (separate track): M365 Power Automate / Power Apps with existing Copilot licences; client data must stay inside the firm's M365 tenant; v1 deliberately narrow, starting with the EOR branch; Phase 2 (tagged paragraph library from past letters) deferred.
 - More tools to follow using the same template and deployment pattern.
