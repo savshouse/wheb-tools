@@ -698,7 +698,7 @@ window.addEventListener('DOMContentLoaded', function() {
   function sl(id,fmt){
     var el=document.getElementById(id),out=document.getElementById('o-'+id);
     if(!el||!out)return;
-    el.addEventListener('input',function(){out.textContent=fmt?fmt(el.value):el.value+'%';calc();});
+    el.addEventListener('input',function(){out.textContent=fmt?fmt(el.value):el.value+'%';calcDebounced();});
   }
   sl('growth');sl('infl');sl('salr');sl('ddg');sl('anpct');sl('anrate');
 
@@ -733,11 +733,11 @@ window.addEventListener('DOMContentLoaded', function() {
     el.addEventListener('focus', function() {
       el.value = el.value.replace(/,/g,'');
     });
-    el.addEventListener('input', calc);
+    el.addEventListener('input', calcDebounced);
   });
   sl('pcls',function(v){return v+'%'+(+v>=25?' (max)':'');});
   ['retire','salary','pot','state','stateage','lifeexp','modelto','p-retire','p-salary','p-state','p-stateage','p-lifeexp','p-modelto'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.addEventListener('input',calc);
+    var el=document.getElementById(id);if(el)el.addEventListener('input',calcDebounced);
   });
   document.getElementById('stateinfl').addEventListener('change',calc);
   var pStateInflEl = document.getElementById('p-stateinfl'); if(pStateInflEl) pStateInflEl.addEventListener('change',calc);
@@ -876,7 +876,7 @@ window.addEventListener('DOMContentLoaded', function() {
     delBtn.addEventListener('click',function(){d.remove();calc();});
 
     d.appendChild(ageField);d.appendChild(eeField);d.appendChild(erField);d.appendChild(modeWrap);d.appendChild(isaField);d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('tier-list').appendChild(d);calc();
   });
 
@@ -893,7 +893,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Current value (£)',valInp));
     d.appendChild(mkf('Annual contrib (£)',contribInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('sav-list').appendChild(d);calc();
   });
 
@@ -912,7 +912,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Amount (£)',amtInp));
     d.appendChild(mkf('At age',ageInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('lumpsum-list').appendChild(d);calc();
   });
 
@@ -931,7 +931,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Amount (£)',amtInp));
     d.appendChild(mkf('At age',ageInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('ddlump-list').appendChild(d);calc();
   });
 
@@ -1005,7 +1005,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Start age',ageInp));
     d.appendChild(mkf('Increase %/yr',inflInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('inc-list').appendChild(d);calc();
   });
 
@@ -1055,7 +1055,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
     delBtn.addEventListener('click',function(){d.remove();calc();});
     d.appendChild(ageField);d.appendChild(eeField);d.appendChild(erField);d.appendChild(modeWrap);d.appendChild(isaField);d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('p-tier-list').appendChild(d);calc();
   });
 
@@ -1074,7 +1074,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Amount (£)',amtInp));
     d.appendChild(mkf('At age',ageInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('p-lumpsum-list').appendChild(d);calc();
   });
 
@@ -1099,7 +1099,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Current value (£)',valInp));
     d.appendChild(mkf('Annual contrib (£)',contribInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('p-sav-list').appendChild(d);calc();
   });
 
@@ -1119,7 +1119,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Amount (£)',amtInp));
     d.appendChild(mkf('At age',ageInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('p-ddlump-list').appendChild(d);calc();
   });
 
@@ -1187,7 +1187,7 @@ window.addEventListener('DOMContentLoaded', function() {
     d.appendChild(mkf('Start age',ageInp));
     d.appendChild(mkf('Increase %/yr',inflInp));
     d.appendChild(delBtn);
-    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
+    d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calcDebounced);});
     document.getElementById('p-inc-list').appendChild(d);calc();
   });
 
@@ -1950,6 +1950,8 @@ window.addEventListener('DOMContentLoaded', function() {
     return { dL:dL, dV:dV, rows:rows, exAge:exAge, pcls:pcls, anPot:anPot, ddPot:ddPot, anIncome:anIncome, tInc:tInc, tax:tax };
   }
   function calc(){document.getElementById('err-box').innerHTML='';try{_calc();}catch(e){document.getElementById('err-box').innerHTML='<div class="err">Error: '+e.message+'</div>';}}
+  var calcDebounceTimer;
+  function calcDebounced(){clearTimeout(calcDebounceTimer);calcDebounceTimer=setTimeout(calc,150);}
 
   function _calc(){
     var dob=document.getElementById('dob').value;
@@ -2014,8 +2016,8 @@ window.addEventListener('DOMContentLoaded', function() {
     var atRows=[];
     for(var ati=atStart;ati<aL.length;ati++){
       var atAge=aL[ati], atVal=aV[ati];
-      var atTaxFree=atVal*0.25;
-      var atResidual=atVal*0.75;
+      var atTaxFree=atVal*pclsPct;
+      var atResidual=atVal*(1-pclsPct);
       var atIncome=atResidual*anRate;
       atRows.push({age:atAge,val:atVal,taxfree:atTaxFree,income:atIncome});
     }
@@ -2026,7 +2028,7 @@ window.addEventListener('DOMContentLoaded', function() {
       }).join('');
     }
     var atNote=document.getElementById('accum-table-note');
-    if(atNote) atNote.textContent='Annuity income assumes the remaining 75% of the pot (after 25% PCLS) is used to purchase an annuity at your chosen rate of '+(anRate*100).toFixed(2)+'% per year.';
+    if(atNote) atNote.textContent='Annuity income assumes the remaining '+Math.round((1-pclsPct)*100)+'% of the pot (after '+Math.round(pclsPct*100)+'% PCLS) is used to purchase an annuity at your chosen rate of '+(anRate*100).toFixed(2)+'% per year.';
 
     var exIdx=exAge?dL.indexOf(exAge):-1;
     var bgs=dV.map(function(_,i){return(exIdx<0||i<exIdx)?'rgba(29,53,59,0.7)':'rgba(226,75,74,0.55)';});
