@@ -66,6 +66,25 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .mv{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:2px}
 .ms{font-size:11px;color:var(--muted)}
 .irow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:end;margin-bottom:6px}
+.potrow{display:grid;grid-template-columns:1fr 160px auto;gap:8px;align-items:end;margin-bottom:6px}
+.potrow input{font-size:12px}
+.irow4{display:grid;grid-template-columns:1fr 1fr 90px 90px auto;gap:6px;align-items:end;margin-bottom:6px}
+.irow4 input{font-size:12px}
+@media(max-width:760px){.irow4{grid-template-columns:1fr 1fr;row-gap:8px}.potrow{grid-template-columns:1fr 1fr}}
+.pot-total{display:flex;justify-content:space-between;align-items:center;background:var(--offwhite);border-radius:8px;padding:.6rem .9rem;margin-top:.6rem;border-left:3px solid var(--gold)}
+.pot-total span:first-child{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.pot-total span:last-child{font-size:17px;font-weight:700;color:var(--navy)}
+.decum-region{display:none}
+body.decum-on .decum-region{display:block}
+.decum-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;background:#fff;border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;cursor:pointer;text-align:left}
+.decum-toggle:hover{background:var(--offwhite)}
+.decum-toggle .dt-title{font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.07em;text-transform:uppercase;margin:0}
+.decum-toggle .dt-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.decum-toggle .dt-chev{font-size:13px;color:var(--gold);font-weight:700;flex-shrink:0;display:inline-block;transition:transform .2s}
+body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
+.sec-sub{font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.07em;text-transform:uppercase;margin:1.5rem 0 .75rem;padding-top:1rem;border-top:2px solid var(--gold)}
+.assump-bar{background:var(--offwhite);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;margin-bottom:1rem}
+.assump-bar .g3{margin-bottom:0}
 .trow{display:grid;grid-template-columns:70px 110px 110px 70px 1fr auto;gap:8px;align-items:end;margin-bottom:8px}
 @media(max-width:760px){.trow{grid-template-columns:1fr 1fr;row-gap:8px}}
 .irow input,.trow input{font-size:12px}
@@ -208,15 +227,24 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
           <span class="dob-age" id="o-age">Age 35</span>
         </div>
       </div>
-      <div><label>Retirement age</label><input type="number" id="retire" value="67" min="40" max="85"></div>
       <div><label>Annual salary (£)</label><input type="text" id="salary" value="40,000" class="currency-input"></div>
-      <div><label>Current pension pot (£)</label><input type="text" id="pot" value="20,000" class="currency-input"></div>
     </div>
+    <input type="hidden" id="pot" value="20000">
     <div class="g3">
-      <div><label>Growth rate (%)</label><input type="range" id="growth" min="1" max="12" step="0.5" value="5"><div class="sv" id="o-growth">5%</div></div>
       <div><label>Inflation (%)</label><input type="range" id="infl" min="0" max="8" step="0.5" value="2.5"><div class="sv" id="o-infl">2.5%</div></div>
       <div><label>Salary growth (%/yr)</label><input type="range" id="salr" min="0" max="8" step="0.5" value="2"><div class="sv" id="o-salr">2%</div></div>
     </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd">
+      <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></div>
+      <p class="stitle">Pension pots</p>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.5rem">Add each existing pension. They are combined into a single total for the projection.</p>
+    <div id="pot-list"></div>
+    <button class="abtn" id="add-pot">+ Add pension</button>
+    <div class="pot-total"><span>Total pension pot</span><span id="pot-total-val">£0</span></div>
   </div>
 
   <div class="sec">
@@ -276,6 +304,15 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
     <button class="abtn" id="add-sav">+ Add savings pot</button>
   </div>
 
+  <button type="button" class="decum-toggle" id="decum-toggle" aria-expanded="false">
+    <span>
+      <p class="dt-title">Plan retirement income</p>
+      <p class="dt-sub">Optional &mdash; model how the pot is spent: tax-free cash, annuity, drawdown, state pension and longevity.</p>
+    </span>
+    <span class="dt-chev">&#9654;</span>
+  </button>
+
+  <div id="decum-inputs" class="decum-region">
   <div class="sec">
     <div class="sec-hd">
       <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
@@ -324,6 +361,8 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
     </div>
   </div>
 
+  </div><!-- /decum-inputs -->
+
   <div class="sec" id="results-sec">
     <div class="sec-hd" style="justify-content:space-between">
       <div style="display:flex;align-items:center;gap:.6rem">
@@ -336,28 +375,35 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
       </button>
     </div>
     <div id="err-box"></div>
-    <div class="g4" id="metrics"></div>
-    <div id="alerts"></div>
-    <div id="bars" style="margin-top:.5rem"></div>
-    <div class="leg" id="barleg"></div>
-    <p class="charttitle">Income tax estimate at retirement (2024/25 bands)</p>
-    <div class="tax-grid" id="tax-summary"></div>
-    <div class="rgrid" style="margin-top:1rem">
-      <div>
-        <p class="charttitle">Pot accumulation to retirement</p>
-        <div class="chartbox"><canvas id="cAccum"></canvas></div>
-      </div>
-      <div>
-        <p class="charttitle">Drawdown pot through retirement</p>
-        <div class="chartbox"><canvas id="cDecum"></canvas></div>
+
+    <div class="assump-bar">
+      <div class="g3">
+        <div><label>Retirement age</label><input type="number" id="retire" value="67" min="40" max="85"></div>
+        <div><label>Growth rate (%)</label><input type="range" id="growth" min="1" max="12" step="0.5" value="5"><div class="sv" id="o-growth">5%</div></div>
+        <div style="display:flex;align-items:flex-end"><div style="font-size:11px;color:var(--muted);padding-bottom:6px;line-height:1.5">Adjust these to see the effect on the results below.</div></div>
       </div>
     </div>
+
+    <div class="g4" id="metrics"></div>
+    <div id="bars" style="margin-top:.5rem"></div>
+    <div class="leg" id="barleg"></div>
+    <p class="charttitle">Pot accumulation to retirement</p>
+    <div class="chartbox"><canvas id="cAccum"></canvas></div>
+    <div id="decum-results" class="decum-region">
+    <p class="sec-sub">Retirement income &mdash; decumulation</p>
+    <div class="g4" id="metrics-decum"></div>
+    <div id="alerts"></div>
+    <p class="charttitle">Income tax estimate at retirement (2024/25 bands)</p>
+    <div class="tax-grid" id="tax-summary"></div>
+    <p class="charttitle">Drawdown pot through retirement</p>
+    <div class="chartbox"><canvas id="cDecum"></canvas></div>
     <p class="charttitle">Annual income by source</p>
     <div class="chartbox" style="height:240px"><canvas id="cIncome"></canvas></div>
     <div class="leg" id="incleg"></div>
     <p class="charttitle" style="page-break-before:always">Monte Carlo simulation &#8212; 500 scenarios</p>
     <div class="chartbox" style="height:240px"><canvas id="cMonte"></canvas></div>
     <p class="mc-note" id="mc-note"></p>
+    </div><!-- /decum-results -->
 
     <div class="disclaimer">These results are estimates only, making assumptions from the information you've given us and are no replacement for full regulated financial advice.</div>
 
@@ -642,16 +688,18 @@ window.addEventListener('DOMContentLoaded', function() {
 
   document.getElementById('add-inc').addEventListener('click',function(){
     icnt++;var id=icnt;
-    var d=document.createElement('div');d.id='inc-'+id;d.className='irow';
+    var d=document.createElement('div');d.id='inc-'+id;d.className='irow4';
     function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
     var nameInp=document.createElement('input');nameInp.type='text';nameInp.value='DB pension';
     var amtInp=document.createElement('input');amtInp.type='number';amtInp.value='5000';amtInp.step='100';
     var ageInp=document.createElement('input');ageInp.type='number';ageInp.value='65';ageInp.min='50';ageInp.max='90';
+    var inflInp=document.createElement('input');inflInp.type='number';inflInp.value='0';inflInp.min='0';inflInp.max='10';inflInp.step='0.25';
     var delBtn=document.createElement('button');delBtn.className='dbtn';delBtn.innerHTML='&#215;';
     delBtn.addEventListener('click',function(){d.remove();calc();});
     d.appendChild(mkf('Name',nameInp));
     d.appendChild(mkf('Amount (£/yr)',amtInp));
     d.appendChild(mkf('Start age',ageInp));
+    d.appendChild(mkf('Increase %/yr',inflInp));
     d.appendChild(delBtn);
     d.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc);});
     document.getElementById('inc-list').appendChild(d);calc();
@@ -669,7 +717,7 @@ window.addEventListener('DOMContentLoaded', function() {
     };
   }).sort(function(a,b){return a.age-b.age;});}
   function getSavs(){return Array.from(document.querySelectorAll('#sav-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{name:ins[0].value||'Savings',val:+ins[1].value||0,contrib:+ins[2].value||0};});}
-  function getIncs(){return Array.from(document.querySelectorAll('#inc-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{name:ins[0].value||'Income',amt:+ins[1].value||0,startAge:+ins[2].value||0};});}
+  function getIncs(){return Array.from(document.querySelectorAll('#inc-list .irow4')).map(function(r){var ins=r.querySelectorAll('input');return{name:ins[0].value||'Income',amt:+ins[1].value||0,startAge:+ins[2].value||0,infl:(+ins[3].value||0)/100};});}
   function getDDStages(){return Array.from(document.querySelectorAll('#ddstage-list .ddrow')).map(function(r){var ins=r.querySelectorAll('input');return{age:+ins[0].value||99,monthly:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0)};}).sort(function(a,b){return a.age-b.age;});}
   function getLumpsums(){return Array.from(document.querySelectorAll('#lumpsum-list .irow')).map(function(r){var ins=r.querySelectorAll('input');return{label:ins[0].value||'Lump sum',amt:(parseFloat((ins[1].value||'0').replace(/,/g,''))||0),age:+ins[2].value||99};});}
   function getContribMode(target){var t=document.querySelector('.mode-toggle[data-target="'+target+'"]');if(!t)return'pct';var active=t.querySelector('.mode-btn.active');return active?active.dataset.mode:'pct';}
@@ -755,6 +803,43 @@ window.addEventListener('DOMContentLoaded', function() {
   // SAVE / LOAD — Retirement Planner
   // =====================================================================
 
+  // ---------- Pension pots ----------
+  var pcnt = 0;
+  function potRow(name, val){
+    pcnt++; var id='pot-'+pcnt;
+    var d=document.createElement('div'); d.id=id; d.className='potrow';
+    function mkf(t,inp){var w=document.createElement('div');var l=document.createElement('label');l.style.fontSize='11px';l.textContent=t;w.appendChild(l);w.appendChild(inp);return w;}
+    var nameInp=document.createElement('input'); nameInp.type='text'; nameInp.value=name||'Pension';
+    var valInp=document.createElement('input'); valInp.type='text'; valInp.className='currency-input';
+    valInp.value=(val===undefined?20000:val).toLocaleString('en-GB');
+    valInp.addEventListener('blur',function(){var raw=parseFloat(valInp.value.replace(/,/g,''))||0;valInp.value=raw.toLocaleString('en-GB');});
+    valInp.addEventListener('focus',function(){valInp.value=valInp.value.replace(/,/g,'');});
+    var del=document.createElement('button'); del.className='dbtn'; del.innerHTML='&#215;';
+    del.addEventListener('click',function(){ d.remove(); syncPots(); });
+    d.appendChild(mkf('Provider / name',nameInp));
+    d.appendChild(mkf('Current value (£)',valInp));
+    d.appendChild(del);
+    d.querySelectorAll('input').forEach(function(i){ i.addEventListener('input', syncPots); });
+    document.getElementById('pot-list').appendChild(d);
+    return d;
+  }
+  function getPots(){
+    return Array.from(document.querySelectorAll('#pot-list .potrow')).map(function(r){
+      var ins=r.querySelectorAll('input');
+      return { name: ins[0].value||'Pension', val: parseFloat((ins[1].value||'0').replace(/,/g,''))||0 };
+    });
+  }
+  function syncPots(){
+    var pots=getPots();
+    var total=pots.reduce(function(a,b){return a+b.val;},0);
+    var hidden=document.getElementById('pot');
+    if(hidden) hidden.value=total;
+    var lbl=document.getElementById('pot-total-val');
+    if(lbl) lbl.textContent='£'+Math.round(total).toLocaleString('en-GB');
+    calc();
+  }
+  document.getElementById('add-pot').addEventListener('click',function(){ potRow('Pension',0); syncPots(); });
+
   function gatherState() {
     return {
       version: 2,
@@ -767,6 +852,7 @@ window.addEventListener('DOMContentLoaded', function() {
       salary:      (document.getElementById('salary')||{}).value || '',
       salr:        (document.getElementById('salr')||{}).value || '',
       pot:         (document.getElementById('pot')||{}).value || '',
+      pots:        getPots(),
       growth:      (document.getElementById('growth')||{}).value || '',
       infl:        (document.getElementById('infl')||{}).value || '',
       // Contribution modes and amounts
@@ -834,7 +920,17 @@ window.addEventListener('DOMContentLoaded', function() {
     setVal('retire', s.retire);
     setVal('salary', s.salary);
     setVal('salr', s.salr);
-    setVal('pot', s.pot);
+    // Pension pots: rebuild rows (v3), or fall back to a single row from legacy 'pot' total
+    var potList = document.getElementById('pot-list');
+    if (potList) {
+      potList.innerHTML = '';
+      if (Array.isArray(s.pots) && s.pots.length) {
+        s.pots.forEach(function(x){ potRow(x.name, x.val); });
+      } else {
+        potRow('Pension', parseFloat(String(s.pot||0).replace(/,/g,'')) || 0);
+      }
+      syncPots();
+    }
     setVal('growth', s.growth);
     setVal('infl', s.infl);
     setVal('pcls', s.pcls);
@@ -1113,7 +1209,7 @@ window.addEventListener('DOMContentLoaded', function() {
       var ca2=retire+yr;dL.push(ca2);dV.push(Math.round(Math.max(0,ddP)));
       if(ddP<=0&&exAge===null)exAge=ca2;
       var stY=(ca2>=stateAge)?statePa*(stateInfl?iF:1):0;
-      var exY=incs.reduce(function(s,src){return s+(ca2>=src.startAge?src.amt*(stateInfl?iF:1):0);},0);
+      var exY=incs.reduce(function(s,src){if(ca2<src.startAge)return s;return s+src.amt*Math.pow(1+(src.infl||0),ca2-src.startAge);},0);
       var anY=anIncome*(stateInfl?iF:1);
       var ddMonthly=ddrBaseMonthly;
       for(var ds=0;ds<ddStages.length;ds++){if(ca2>=ddStages[ds].age)ddMonthly=ddStages[ds].monthly;}
@@ -1135,8 +1231,14 @@ window.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('metrics').innerHTML=
       '<div class="metric"><p class="ml">Pot at retirement</p><p class="mv">'+fmtM(pot)+'</p><p class="ms">Real value: '+fmtM(realPot)+'</p></div>'+
+      '<div class="metric"><p class="ml">Total contributions</p><p class="mv">'+fmtM(tc)+'</p><p class="ms">Including starting pots</p></div>'+
+      '<div class="metric"><p class="ml">Investment growth</p><p class="mv">'+fmtM(Math.max(0,growth))+'</p><p class="ms">Over '+years+' years</p></div>'+
+      '<div class="metric"><p class="ml">Other savings at '+retire+'</p><p class="mv">'+fmtM(tSavs)+'</p><p class="ms">ISA / non-pension</p></div>';
+    var mdEl=document.getElementById('metrics-decum');
+    if(mdEl) mdEl.innerHTML=
       '<div class="metric"><p class="ml">Tax-free cash</p><p class="mv">'+fmtM(pcls)+'</p><p class="ms">'+Math.round(pclsPct*100)+'% of pot</p></div>'+
       '<div class="metric"><p class="ml">Annual income at '+retire+'</p><p class="mv">'+fmtM(tInc)+'</p><p class="ms">Net: '+fmtF(Math.round(tax.net/12))+'/mo</p></div>'+
+      '<div class="metric"><p class="ml">Drawdown pot</p><p class="mv">'+fmtM(ddPot)+'</p><p class="ms">After cash &amp; annuity</p></div>'+
       '<div class="metric"><p class="ml">Drawdown exhausted</p><p class="mv">'+(exAge?'Age '+exAge:'Not exhausted')+'</p><p class="ms">'+(exAge&&exAge<=lifeexp?'Before life expectancy':'Guaranteed income continues')+'</p></div>';
 
     document.getElementById('alerts').innerHTML=(exAge&&exAge<=lifeexp)
@@ -1162,7 +1264,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
     var ec=['rgba(127,119,221,0.8)','rgba(29,158,117,0.8)','rgba(212,83,126,0.8)','rgba(136,135,128,0.8)'];
     var ds=[{label:'Drawdown',data:rows.map(function(r){return r.dd;}),backgroundColor:'rgba(29,53,59,0.75)',stack:'s'},{label:'Annuity',data:rows.map(function(r){return r.an;}),backgroundColor:'rgba(201,168,76,0.85)',stack:'s'},{label:'State pension',data:rows.map(function(r){return r.st;}),backgroundColor:'rgba(55,138,221,0.75)',stack:'s'}];
-    incs.forEach(function(src,i){ds.push({label:src.name,data:rows.map(function(r){return r.age>=src.startAge?Math.round(src.amt):0;}),backgroundColor:ec[i%ec.length],stack:'s'});});
+    incs.forEach(function(src,i){ds.push({label:src.name,data:rows.map(function(r){return r.age>=src.startAge?Math.round(src.amt*Math.pow(1+(src.infl||0),r.age-src.startAge)):0;}),backgroundColor:ec[i%ec.length],stack:'s'});});
     mkChart('cIncome',{type:'bar',data:{labels:rows.map(function(r){return r.age;}),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return' '+c.dataset.label+': '+fmtF(c.raw);}}}},scales:{x:{stacked:true,grid:gc,ticks:xT,title:{display:true,text:'Age',color:'#999',font:{size:11}}},y:{stacked:true,grid:gc,ticks:yT}}}});
     var lh='<div class="legi"><div class="legdot" style="background:rgba(29,53,59,0.85)"></div>Drawdown</div>'+(anPot>0?'<div class="legi"><div class="legdot" style="background:rgba(201,168,76,0.9)"></div>Annuity</div>':'')+(statePa>0?'<div class="legi"><div class="legdot" style="background:rgba(55,138,221,0.85)"></div>State pension</div>':'');
     incs.forEach(function(src,i){lh+='<div class="legi"><div class="legdot" style="background:'+ec[i%ec.length]+'"></div>'+src.name+'</div>';});
@@ -1204,6 +1306,23 @@ window.addEventListener('DOMContentLoaded', function() {
       {label:'Median',data:p50,fill:false,borderColor:'#1D353B',borderWidth:2.5,pointRadius:0,tension:0.3}
     ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(c){return' '+c.dataset.label+': '+fmtM(c.raw);}}}},scales:{x:{grid:gc,ticks:xT,title:{display:true,text:'Age',color:'#999',font:{size:11}}},y:{grid:gc,ticks:yT}}}});
   }
+
+  document.getElementById('decum-toggle').addEventListener('click', function(){
+    var on = document.body.classList.toggle('decum-on');
+    this.setAttribute('aria-expanded', on ? 'true' : 'false');
+    if(on) setTimeout(calc, 30);
+  });
+
+  // Expose save/load handlers used by inline onclick attributes
+  window.saveJSON = saveJSON;
+  window.saveCSV  = saveCSV;
+  window.loadFile = loadFile;
+  window.gatherState = gatherState;
+  window.applyState  = applyState;
+
+  // Seed one pension pot row
+  potRow('Pension', 20000);
+  syncPots();
 
   // Initial population of age/SPA/life-expectancy labels from default DOB
   (function(){
