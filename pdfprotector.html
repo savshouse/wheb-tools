@@ -293,6 +293,7 @@ input[type=password]:focus{outline:none;border-color:var(--navy)}
 .submit-btn{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .18s;width:100%;justify-content:center;margin-top:.25rem}
 .submit-btn:hover:not(:disabled){opacity:.82}
 .submit-btn:disabled{opacity:.45;cursor:not-allowed}
+.pp-mode-hint{font-size:12px;color:var(--muted);margin-top:.5rem}
 </style>
 </head>
 <body>
@@ -315,7 +316,7 @@ input[type=password]:focus{outline:none;border-color:var(--navy)}
 
 <div class="hero">
   <h1>PDF Password Protector</h1>
-  <p>Secure your PDF documents with password protection — fully in-browser, nothing uploaded</p>
+  <p>Add or remove password protection on PDF documents — fully in-browser, nothing uploaded</p>
 </div>
 
 <div class="page">
@@ -334,7 +335,15 @@ input[type=password]:focus{outline:none;border-color:var(--navy)}
         <div class="sec-icon">
           <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
         </div>
-        <h2 class="stitle">Protect Your PDF</h2>
+        <h2 class="stitle" id="sectionTitle">Protect Your PDF</h2>
+      </div>
+
+      <div class="form-group">
+        <label>What do you want to do?</label>
+        <div class="mode-toggle" id="modeToggle">
+          <button type="button" class="mode-btn active" data-mode="add">Add password</button>
+          <button type="button" class="mode-btn" data-mode="remove">Remove password</button>
+        </div>
       </div>
 
       <div class="form-group">
@@ -349,8 +358,9 @@ input[type=password]:focus{outline:none;border-color:var(--navy)}
       </div>
 
       <div class="form-group">
-        <label for="password">Set Password</label>
+        <label for="password" id="passwordLabel">Set Password</label>
         <input type="password" id="password" placeholder="Enter a strong password" required>
+        <div class="pp-mode-hint" id="passwordHint"></div>
       </div>
 
       <button type="submit" id="protectBtn" class="submit-btn">&#128274; Encrypt &amp; Download</button>
@@ -360,7 +370,7 @@ input[type=password]:focus{outline:none;border-color:var(--navy)}
   <div id="status" class="status"></div>
 
   <div class="disclaimer" style="margin-top:1rem">
-    <strong>How it works:</strong> Your PDF is encrypted entirely within your browser using AES-256 encryption. The protected file downloads directly to your device. No data is ever uploaded or sent anywhere.
+    <strong>How it works:</strong> Your PDF is processed entirely within your browser — to add a password, using AES-256 encryption, or to remove one (given the correct current password), using the open-source QPDF engine compiled to WebAssembly. The resulting file downloads directly to your device. No data is ever uploaded or sent anywhere.
   </div>
 
 </div>
@@ -399,9 +409,129 @@ const pdfFileInput = document.getElementById('pdfFile');
 const fileLabel = document.querySelector('.file-input-label');
 const fileName = document.getElementById('fileName');
 const passwordInput = document.getElementById('password');
+const passwordLabelEl = document.getElementById('passwordLabel');
+const passwordHint = document.getElementById('passwordHint');
+const sectionTitle = document.getElementById('sectionTitle');
+const modeToggle = document.getElementById('modeToggle');
 const form = document.getElementById('protectForm');
 const statusDiv = document.getElementById('status');
 const protectBtn = document.getElementById('protectBtn');
+
+// ---------------------------------------------------------------------
+// Mode toggle (Add password / Remove password). This only changes labels
+// and which branch the submit handler below takes -- the existing
+// "Add password" logic further down is untouched.
+// ---------------------------------------------------------------------
+var mode = 'add';
+var MODE_CONFIG = {
+  add: {
+    title: 'Protect Your PDF',
+    passwordLabel: 'Set Password',
+    passwordPlaceholder: 'Enter a strong password',
+    hint: 'This password will be required to open the PDF.',
+    button: '&#128274; Encrypt &amp; Download'
+  },
+  remove: {
+    title: 'Remove PDF Password',
+    passwordLabel: 'Current password',
+    passwordPlaceholder: 'Enter the PDF\u2019s current password',
+    hint: 'This must match the password already protecting the file.',
+    button: '&#128275; Remove Password &amp; Download'
+  }
+};
+function applyMode() {
+  var cfg = MODE_CONFIG[mode];
+  sectionTitle.textContent = cfg.title;
+  passwordLabelEl.textContent = cfg.passwordLabel;
+  passwordInput.placeholder = cfg.passwordPlaceholder;
+  passwordHint.textContent = cfg.hint;
+  protectBtn.innerHTML = cfg.button;
+  passwordInput.value = '';
+  statusDiv.className = 'status';
+  statusDiv.textContent = '';
+}
+modeToggle.querySelectorAll('.mode-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    modeToggle.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    applyMode();
+  });
+});
+applyMode();
+
+// ---------------------------------------------------------------------
+// "Remove password" engine: QPDF compiled to WebAssembly, run in a
+// dedicated Web Worker. This is a SEPARATE library from @cantoo/pdf-lib
+// above (which continues to handle "Add password" only, unchanged) --
+// @cantoo/pdf-lib's own decrypt-then-resave path was verified (2026-09-26)
+// to produce corrupted output; see CLAUDE.md for the writeup.
+//
+// Classic Workers must be constructed from a same-origin script, so the
+// CDN-hosted qpdf-worker.js can't be used directly via `new Worker(url)`.
+// We fetch its source (fetch() is CORS-fine) and patch the one line that
+// derives its own asset base path from `self.location.href` -- inside a
+// Worker built from a Blob URL that would resolve to the blob: URL itself,
+// breaking the relative lookup of lib/qpdf.js and lib/qpdf.wasm. Hardcoding
+// the real CDN base path fixes both, and everything after that (fetching
+// the wasm, importScripts) is a normal cross-origin resource load, which
+// browsers allow without restriction. Verified end-to-end (including a
+// true cross-origin round trip) before shipping.
+// ---------------------------------------------------------------------
+var QPDF_BASE_URL = 'https://cdn.jsdelivr.net/npm/qpdf.js@2.0.0/src/';
+var qpdfWorkerBlobUrlPromise = null;
+
+function getQpdfWorkerBlobUrl() {
+  if (!qpdfWorkerBlobUrlPromise) {
+    qpdfWorkerBlobUrlPromise = fetch(QPDF_BASE_URL + 'qpdf-worker.js').then(function(r) {
+      if (!r.ok) throw new Error('Could not load the PDF decryption engine (HTTP ' + r.status + ')');
+      return r.text();
+    }).then(function(src) {
+      var anchor = "const scriptURL = self.location.href;\nconst basePath = scriptURL.substring(0, scriptURL.lastIndexOf('/') + 1);";
+      if (src.indexOf(anchor) === -1) throw new Error('PDF decryption engine has changed unexpectedly');
+      var patched = src.replace(anchor, 'const basePath = ' + JSON.stringify(QPDF_BASE_URL) + ';');
+      return URL.createObjectURL(new Blob([patched], { type: 'application/javascript' }));
+    });
+  }
+  return qpdfWorkerBlobUrlPromise;
+}
+
+async function removePdfPassword(arrayBuffer, password) {
+  var blobUrl = await getQpdfWorkerBlobUrl();
+  var worker = new Worker(blobUrl);
+  try {
+    await new Promise(function(resolve, reject) {
+      var onMsg = function(e) {
+        if (e.data.type === 'ready') { worker.removeEventListener('message', onMsg); resolve(); }
+      };
+      worker.addEventListener('message', onMsg);
+      worker.onerror = function(e) { reject(new Error('Failed to start the PDF decryption engine: ' + e.message)); };
+    });
+    var resultBytes = await new Promise(function(resolve, reject) {
+      var stage = 'save';
+      worker.onmessage = function(e) {
+        var m = e.data;
+        if (m.type === 'stdout') return;
+        if (m.type === 'error') { reject(new Error(m.message)); return; }
+        if (stage === 'save' && m.type === 'saved') {
+          stage = 'execute';
+          worker.postMessage({ type: 'execute', args: ['--decrypt', '--password=' + password, '--', 'in.pdf', 'out.pdf'] });
+        } else if (stage === 'execute' && m.type === 'executed') {
+          if (m.status !== 0) { reject(new Error(m.error || 'Could not remove the password')); return; }
+          stage = 'load';
+          worker.postMessage({ type: 'load', filename: 'out.pdf' });
+        } else if (stage === 'load' && m.type === 'loaded') {
+          resolve(m.arrayBuffer);
+        }
+      };
+      worker.onerror = function(e) { reject(new Error('The PDF decryption engine failed: ' + e.message)); };
+      worker.postMessage({ type: 'save', filename: 'in.pdf', arrayBuffer: arrayBuffer });
+    });
+    return resultBytes;
+  } finally {
+    worker.terminate();
+  }
+}
 
 pdfFileInput.addEventListener('change', function() {
   if (this.files.length > 0) {
@@ -428,10 +558,49 @@ fileLabel.addEventListener('drop', function(e) {
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
   const file = pdfFileInput.files[0];
-  const password = passwordInput.value;
   if (!file) { showStatus('Please select a PDF file', 'error'); return; }
-  if (!password) { showStatus('Please enter a password', 'error'); return; }
   if (file.type !== 'application/pdf') { showStatus('Please select a valid PDF file', 'error'); return; }
+
+  if (mode === 'remove') {
+    const removePassword = passwordInput.value;
+    if (!removePassword) { showStatus('Please enter the current password', 'error'); return; }
+    protectBtn.disabled = true;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const probeDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+      if (!probeDoc.isEncrypted) {
+        showStatus('This PDF is not password protected \u2014 there is nothing to remove.', 'error');
+        protectBtn.disabled = false;
+        return;
+      }
+      showStatus('Removing password\u2026', 'loading');
+      const decryptedBytes = await removePdfPassword(arrayBuffer, removePassword);
+      const blob = new Blob([decryptedBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name.replace(/\.pdf$/i, '') + '_unprotected.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showStatus('\u2713 Done! The password has been removed and your PDF has been downloaded.', 'success');
+    } catch (error) {
+      console.error('Error:', error);
+      if (/invalid password/i.test(error.message || '')) {
+        showStatus('That password doesn\u2019t match this file \u2014 please check it and try again.', 'error');
+      } else {
+        showStatus('An error occurred: ' + error.message, 'error');
+      }
+    } finally {
+      protectBtn.disabled = false;
+    }
+    return;
+  }
+
+  // --- "Add password" flow below is unchanged from the original tool ---
+  const password = passwordInput.value;
+  if (!password) { showStatus('Please enter a password', 'error'); return; }
   protectBtn.disabled = true;
   showStatus('Encrypting your PDF\u2026', 'loading');
   try {
