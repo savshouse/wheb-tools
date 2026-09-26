@@ -159,6 +159,7 @@ Common bug patterns already hit (check for these):
 
 - Entirely client-side: uses `@cantoo/pdf-lib` (jsdelivr CDN) to load the uploaded PDF and call `pdfDoc.encrypt({ userPassword, ownerPassword })` (same password for both), then triggers a download of the encrypted file. Nothing is uploaded to a server.
 - Now listed in the Tools Hub (`tools.html`).
+- **"Remove password" — do NOT add this without re-testing first.** Verified (2026-09-26) that `@cantoo/pdf-lib@2.11.1`'s published dist is broken for decrypt-then-resave: `PDFDocument.load(bytes, {password})` correctly authenticates and clears `isEncrypted`, but `.save()` still re-embeds a stale `/Encrypt` entry — the output opens with **neither** the original password **nor** no password (genuinely corrupted, not just "still protected"). Confirmed directly against the raw library (bypassing our UI entirely) with a real encrypt→decrypt→resave round trip, so it isn't a bug in our code. The library's own TypeScript source (`PDFDocument.ts`) suggests this should work — the shipped `dist/*.min.js` appears to lag behind `src/`. Before attempting this feature again: check for a newer `@cantoo/pdf-lib` release past 2.11.1 and re-run the same round-trip test (create → encrypt → load-with-password → save → try loading the result both with and without the original password) before trusting it.
 
 ---
 
