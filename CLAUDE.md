@@ -62,7 +62,7 @@ Common bug patterns already hit (check for these):
 - Gold: `#c9a84c`, Gold-light: `#e8d08a`, Off-white: `#f7f6f2`, Border: `#e2e2de`
 - Font: system UI stack, no webfont. Page `max-width: 920px`.
 - Header: sticky navy bar, logo left, nav links, phone (`01908 326586`) and email (`whteam@warren-house.co.uk`) right.
-- `⊛ Tools` gold nav link is the **first** header-nav item on every tool → https://cswm.me.uk/tools
+- `⊛ Tools` gold nav link is the **first** header-nav item on every tool → https://cswm.me.uk/tools. Exact markup (copy verbatim, don't retype the entity): `<a class="hdr-link" href="https://cswm.me.uk/tools" target="_blank" rel="noopener" style="color:var(--gold-light);font-weight:700">&#9783; Tools</a>`. This was missing from `wheb-template.html` itself (fixed 2026-09-28, after it shipped without one on `salexchange.html`, and `pdfprotector.html` had a mismatched "&#8592; WHEB Tools" variant) — the template now includes it, so new tools built from it get it for free. If you ever find a tool without it, that tool predates the fix; add the link above rather than reinventing it.
 - Gold gradient divider: `linear-gradient(90deg, navy, gold, gold-light, navy)`
 - Hero: navy background, white h1, gold-light subtitle.
 - Sections: `.sec` + `.sec-hd` + `.sec-icon` (navy square, gold SVG) + `.stitle`
