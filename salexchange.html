@@ -356,7 +356,7 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
   <details class="assumptions">
     <summary>How these figures are calculated &mdash; assumptions &amp; methodology</summary>
     <div class="assumptions-body">
-      <p><strong>Tax year:</strong> All figures use 2025/26 UK and Scottish income tax bands and 2025/26 National Insurance rates and thresholds (including the employer secondary threshold of £5,000 and 15% employer NIC rate effective from April 2025). This is based on our current understanding of applicable legislation and practice, which is subject to change without notice.</p>
+      <p><strong>Tax year:</strong> All figures use 2026/27 UK and Scottish income tax bands and 2026/27 National Insurance rates and thresholds (including the employer secondary threshold of £5,000 and 15% employer NIC rate, unchanged since April 2025). This is based on our current understanding of applicable legislation and practice, which is subject to change without notice.</p>
       <p><strong>Salary Sacrifice:</strong> the sacrificed amount is treated as an employer pension contribution, reducing the employee's contractual salary before income tax and both employee and employer National Insurance are calculated. Any employer NI saving you choose to reinvest is added to the employer's pension contribution.</p>
       <p><strong>Net Pay:</strong> the employee's own contribution is deducted from gross pay before income tax is calculated, giving automatic tax relief at the employee's full marginal rate(s). National Insurance is calculated on the full, unreduced salary — Net Pay does not reduce NI liability for either the employee or employer.</p>
       <p><strong>Relief at Source (RAS):</strong> the employee pays their contribution net of basic-rate tax (80% of the gross amount) from already-taxed pay; the scheme claims the 20% back from HMRC and adds it to the pot. Income tax and National Insurance shown in the take-home pay figures are calculated on the <strong>full, unreduced salary</strong> — they do not assume any higher or additional rate relief has been claimed. <strong>Any further tax relief a higher or additional rate taxpayer may be entitled to is shown as a separate figure</strong> ("Additional relief you may be able to claim"), since this is not automatic — it requires a Self Assessment return or a tax code adjustment, is not reflected in monthly take-home pay, and should only be counted on once actually received.</p>
@@ -429,7 +429,7 @@ var PA_STANDARD = 12570, PA_TAPER_LIMIT = 100000;
 var NI_PRIMARY_THRESHOLD = 12570, NI_UEL = 50270, NI_EE_RATE = 0.08, NI_EE_UPPER_RATE = 0.02;
 var NI_ER_THRESHOLD = 5000, NI_ER_RATE = 0.15;
 var AA_STANDARD = 60000;
-var MIN_ANNUAL_INCOME = 22308; // NLW-based floor per current published rate — verify against latest NLW before relying on this
+var MIN_ANNUAL_INCOME = 24785; // 2026/27 NLW £12.71/hr x 37.5hrs x 52wks — verify against latest published NLW before relying on this
 var MAX_SACRIFICE_PCT = 0.8;
 
 function taperedPA(gross) {
@@ -451,7 +451,7 @@ function incomeTax(gross, jurisdiction) {
   var pa = taperedPA(gross);
   var x = Math.max(0, gross - pa);
   if (jurisdiction === 'Scottish') {
-    return taxFromBands(x, [[2306, 0.19], [11685, 0.20], [17101, 0.21], [31338, 0.42], [50140, 0.45]], 0.48);
+    return taxFromBands(x, [[3967, 0.19], [12989, 0.20], [14136, 0.21], [31338, 0.42], [50140, 0.45]], 0.48);
   }
   return taxFromBands(x, [[37700, 0.20], [74870, 0.40]], 0.45);
 }
