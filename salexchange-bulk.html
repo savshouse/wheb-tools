@@ -229,7 +229,6 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .flag-spa{background:#dbeafe;color:#1e3a8a}
 .flag-nmw{background:#fee2e2;color:#7f1d1d}
 .import-row{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;align-items:center}
-label.abtn{margin:0;cursor:pointer}
 </style>
 </head>
 <body>
@@ -319,7 +318,8 @@ label.abtn{margin:0;cursor:pointer}
       <p class="stitle">Employees</p>
     </div>
     <div class="import-row">
-      <label class="abtn">&#8593; Import CSV<input type="file" id="csv-file" accept=".csv,text/csv" style="display:none"></label>
+      <button type="button" class="abtn" id="btn-import-csv">&#8593; Import CSV</button>
+      <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none">
       <button type="button" class="abtn" id="btn-template-csv">&#8681; Download CSV template</button>
       <button type="button" class="abtn" id="btn-add-row">&#43; Add employee</button>
       <button type="button" class="abtn" id="btn-clear-all">Clear all</button>
@@ -702,6 +702,9 @@ function parseDOB(v) {
   return '';
 }
 
+document.getElementById('btn-import-csv').addEventListener('click', function () {
+  document.getElementById('csv-file').click();
+});
 document.getElementById('csv-file').addEventListener('change', function (e) {
   var file = e.target.files[0]; if (!file) return;
   var reader = new FileReader();
