@@ -181,6 +181,15 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .scenario-hd input[type=text]{font-weight:700;color:var(--navy);border:1px solid transparent;background:transparent;font-size:14px;padding:4px 6px;border-radius:5px;width:auto;min-width:120px}
 .scenario-hd input[type=text]:focus,.scenario-hd input[type=text]:hover{background:#fff;border-color:var(--border)}
 .sc-reinvest-wrap.hidden,.sc-bonus-wrap.hidden{display:none}
+.amt-affix{position:relative}
+.amt-affix input{width:100%}
+.amt-affix .affix-prefix,.amt-affix .affix-suffix{position:absolute;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none;display:none}
+.amt-affix .affix-prefix{left:10px}
+.amt-affix .affix-suffix{right:12px}
+.amt-affix.mode-pct .affix-suffix{display:block}
+.amt-affix.mode-pct input{padding-right:24px}
+.amt-affix.mode-currency .affix-prefix{display:block}
+.amt-affix.mode-currency input{padding-left:22px}
 .sc-bonus-wrap{margin-top:.6rem;font-size:12px;color:var(--muted)}
 .sc-bonus-wrap label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text);margin-bottom:0;cursor:pointer}
 .sc-bonus-wrap input[type=checkbox]{width:auto;accent-color:var(--navy);cursor:pointer}
@@ -193,6 +202,12 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .compare-table tr.hl td{font-weight:700;color:var(--navy);background:#faf7ef}
 .compare-table tr.section-row td{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--offwhite);font-weight:700;padding-top:10px}
 .compare-table td.ras-relief{color:#92400e;font-weight:600}
+@media(max-width:640px){
+  .compare-table{min-width:0;font-size:11.5px}
+  .compare-table th,.compare-table td{padding:6px 6px}
+  .compare-table th:first-child,.compare-table td:first-child{white-space:normal;width:90px;max-width:90px}
+  .compare-table th:not(:first-child),.compare-table td:not(:first-child){min-width:76px}
+}
 .relief-note{font-size:11.5px;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:.55rem .75rem;margin-top:.6rem;line-height:1.55}
 .scenario-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-top:.75rem}
 @media(max-width:640px){.scenario-hd{flex-wrap:wrap}}
@@ -314,11 +329,15 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
     <div class="sec-hd">
       <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg></div>
       <p class="stitle">Comparison</p>
+      <div class="mode-toggle" id="periodToggle" style="margin-left:auto">
+        <button type="button" class="mode-btn active" data-val="annual">Annual</button>
+        <button type="button" class="mode-btn" data-val="monthly">Monthly</button>
+      </div>
     </div>
     <div id="alerts"></div>
-    <div class="charttitle">Take-home pay vs pension contribution, by structure</div>
+    <div class="charttitle">Take-home pay vs pension contribution, by structure <span id="chart-period-lbl" style="text-transform:none;font-weight:400;color:var(--muted)">(annual)</span></div>
     <div class="chartbox"><canvas id="cCompare"></canvas></div>
-    <div class="charttitle" style="margin-top:1.25rem">Detailed comparison</div>
+    <div class="charttitle" style="margin-top:1.25rem">Detailed comparison <span id="table-period-lbl" style="text-transform:none;font-weight:400;color:var(--muted)">(annual)</span></div>
     <div class="compare-scroll"><table class="compare-table" id="compare-table"></table></div>
     <div id="relief-notes"></div>
   </div>
@@ -527,6 +546,9 @@ function computeBaseline(person) {
 // Formatting helpers
 // ---------------------------------------------------------------------
 function fmtM(n) { return '£' + Math.round(n).toLocaleString('en-GB'); }
+var displayPeriod = 'annual';
+function periodValue(annualAmount) { return displayPeriod === 'monthly' ? annualAmount / 12 : annualAmount; }
+function fmtP(annualAmount) { return fmtM(periodValue(annualAmount)); }
 function fv(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
 function gv(id) { var v = parseFloat((fv(id) || '0').replace(/,/g, '')); return isNaN(v) ? 0 : v; }
 function toggleVal(el) { var a = el.querySelector('.mode-btn.active'); return a ? a.dataset.val : null; }
@@ -581,16 +603,14 @@ function scenarioCardHTML(id, d) {
         '</div>' +
       '</div>' +
       '<div class="g3">' +
-        '<div><label>Employee contribution</label><input type="number" class="sc-ee-amt" value="' + d.eeVal + '" step="0.5" min="0"></div>' +
-        '<div><label>Employer contribution <span class="tip" data-tip="Uses the same basis and amount type as the employee contribution above, for simplicity.">?</span></label><input type="number" class="sc-er-amt" value="' + d.erVal + '" step="0.5" min="0"></div>' +
+        '<div><label>Employee contribution</label>' +
+          '<div class="amt-affix sc-ee-affix"><span class="affix-prefix">£</span><input type="number" class="sc-ee-amt" value="' + d.eeVal + '" step="0.5" min="0"><span class="affix-suffix">%</span></div>' +
+        '</div>' +
+        '<div><label>Employer contribution <span class="tip" data-tip="Uses the same basis and amount type as the employee contribution above, for simplicity.">?</span></label>' +
+          '<div class="amt-affix sc-er-affix"><span class="affix-prefix">£</span><input type="number" class="sc-er-amt" value="' + d.erVal + '" step="0.5" min="0"><span class="affix-suffix">%</span></div>' +
+        '</div>' +
         '<div class="sc-reinvest-wrap"><label>Employer NI saving reinvested <span class="tip" data-tip="How much of the employer National Insurance saving generated by the sacrifice is paid into the employee\'s pension on top of the sacrificed amount. Only applies to Salary Sacrifice.">?</span></label>' +
-          '<select class="sc-reinvest">' +
-            '<option value="0"' + (d.niReinvestPct === 0 ? ' selected' : '') + '>0%</option>' +
-            '<option value="0.25"' + (d.niReinvestPct === 0.25 ? ' selected' : '') + '>25%</option>' +
-            '<option value="0.5"' + (d.niReinvestPct === 0.5 ? ' selected' : '') + '>50%</option>' +
-            '<option value="0.75"' + (d.niReinvestPct === 0.75 ? ' selected' : '') + '>75%</option>' +
-            '<option value="1"' + (d.niReinvestPct === 1 ? ' selected' : '') + '>100%</option>' +
-          '</select>' +
+          '<div class="amt-affix mode-pct"><input type="number" class="sc-reinvest" value="' + (d.niReinvestPct * 100) + '" min="0" max="100" step="1"><span class="affix-suffix">%</span></div>' +
         '</div>' +
       '</div>' +
       '<div class="sc-bonus-wrap hidden"><label><input type="checkbox" class="sc-bonus"> Also sacrifice the full annual bonus</label></div>' +
@@ -605,7 +625,7 @@ function readScenarioCard(card) {
     amtType: toggleVal(card.querySelector('.sc-amttype')),
     eeVal: parseFloat(card.querySelector('.sc-ee-amt').value) || 0,
     erVal: parseFloat(card.querySelector('.sc-er-amt').value) || 0,
-    niReinvestPct: parseFloat(card.querySelector('.sc-reinvest').value) || 0,
+    niReinvestPct: (parseFloat(card.querySelector('.sc-reinvest').value) || 0) / 100,
     bonusSacrifice: card.querySelector('.sc-bonus').checked
   };
 }
@@ -617,12 +637,18 @@ function refreshScenarioCardVisibility(card) {
   reinvestWrap.classList.toggle('hidden', method !== 'sacrifice');
   var bonusVal = gv('bonus');
   bonusWrap.classList.toggle('hidden', !(method === 'sacrifice' && bonusVal > 0));
+
+  var isPct = toggleVal(card.querySelector('.sc-amttype')) === 'pct';
+  card.querySelector('.sc-ee-affix').classList.toggle('mode-pct', isPct);
+  card.querySelector('.sc-ee-affix').classList.toggle('mode-currency', !isPct);
+  card.querySelector('.sc-er-affix').classList.toggle('mode-pct', isPct);
+  card.querySelector('.sc-er-affix').classList.toggle('mode-currency', !isPct);
 }
 
 function addScenarioCard(defaults) {
   scenarioCount++;
   var id = scenarioCount;
-  var d = Object.assign({ name: 'Structure ' + id, method: 'sacrifice', basis: 'basic', amtType: 'pct', eeVal: 5, erVal: 3, niReinvestPct: 0.5 }, defaults || {});
+  var d = Object.assign({ name: 'Structure ' + id, method: 'sacrifice', basis: 'basic', amtType: 'pct', eeVal: 5, erVal: 3, niReinvestPct: 0 }, defaults || {});
   document.getElementById('scenario-list').insertAdjacentHTML('beforeend', scenarioCardHTML(id, d));
   var card = document.querySelector('.scenario-card[data-id="' + id + '"]');
 
@@ -631,7 +657,7 @@ function addScenarioCard(defaults) {
   wireToggle(card.querySelector('.sc-amttype'), calc);
   card.querySelector('.sc-ee-amt').addEventListener('input', calcDebounced);
   card.querySelector('.sc-er-amt').addEventListener('input', calcDebounced);
-  card.querySelector('.sc-reinvest').addEventListener('change', calc);
+  card.querySelector('.sc-reinvest').addEventListener('input', calcDebounced);
   card.querySelector('.sc-bonus').addEventListener('change', calc);
   card.querySelector('.sc-name').addEventListener('input', calcDebounced);
   card.querySelector('.sc-remove').addEventListener('click', function () {
@@ -702,17 +728,17 @@ function renderTable(baseline, results) {
   body += row('Basis', function (c) { return c === baseline ? '&mdash;' : BASIS_LABELS[c.basis]; });
 
   body += section('Pay');
-  body += row('Contractual salary + bonus', function (c) { return fmtM(c.cashSalary); });
-  body += row('Income tax', function (c) { return fmtM(c.incomeTax); });
-  body += row('Employee National Insurance', function (c) { return fmtM(c.employeeNI); });
-  body += row('RAS contribution paid from net pay', function (c) { return c.method === 'ras' ? fmtM(c.netDeduction) : '&mdash;'; });
-  body += row('Take-home pay', function (c) { return fmtM(c.takeHome); }, 'hl');
-  body += row('Change vs no contribution', function (c) { return c === baseline ? '&mdash;' : fmtM(c.takeHome - baseline.takeHome); });
+  body += row('Contractual salary + bonus', function (c) { return fmtP(c.cashSalary); });
+  body += row('Income tax', function (c) { return fmtP(c.incomeTax); });
+  body += row('Employee National Insurance', function (c) { return fmtP(c.employeeNI); });
+  body += row('RAS contribution paid from net pay', function (c) { return c.method === 'ras' ? fmtP(c.netDeduction) : '&mdash;'; });
+  body += row('Take-home pay', function (c) { return fmtP(c.takeHome); }, 'hl');
+  body += row('Change vs no contribution', function (c) { return c === baseline ? '&mdash;' : fmtP(c.takeHome - baseline.takeHome); });
 
   body += section('Pension');
-  body += row('Employee contribution (gross)', function (c) { return fmtM(c.eePensionGross); });
-  body += row('Employer contribution (gross)', function (c) { return fmtM(c.erPensionGross); });
-  body += row('Total pension contribution', function (c) { return fmtM(c.totalPensionContribution); }, 'hl');
+  body += row('Employee contribution (gross)', function (c) { return fmtP(c.eePensionGross); });
+  body += row('Employer contribution (gross)', function (c) { return fmtP(c.erPensionGross); });
+  body += row('Total pension contribution', function (c) { return fmtP(c.totalPensionContribution); }, 'hl');
   body += row('Pension £ per £1 take-home given up', function (c) {
     if (c === baseline) return '&mdash;';
     var cost = baseline.takeHome - c.takeHome;
@@ -720,8 +746,8 @@ function renderTable(baseline, results) {
   });
 
   body += section('Employer');
-  body += row('Employer NI saving generated', function (c) { return fmtM(c.erNISaving); });
-  body += row('&hellip; of which reinvested into pension', function (c) { return fmtM(c.reinvestedAmt); });
+  body += row('Employer NI saving generated', function (c) { return fmtP(c.erNISaving); });
+  body += row('&hellip; of which reinvested into pension', function (c) { return fmtP(c.reinvestedAmt); });
 
   document.getElementById('compare-table').innerHTML = head + '<tbody>' + body + '</tbody>';
 }
@@ -730,8 +756,9 @@ function renderReliefNotes(results) {
   var withRelief = results.filter(function (r) { return r.extraReliefClaimable > 1; });
   var el = document.getElementById('relief-notes');
   if (!withRelief.length) { el.innerHTML = ''; return; }
+  var perLabel = displayPeriod === 'monthly' ? '/mo' : '/yr';
   el.innerHTML = '<div class="relief-note"><strong>Additional tax relief you may be able to claim (not included above):</strong><br>' +
-    withRelief.map(function (r) { return '&bull; "' + r.name + '": up to ' + fmtM(r.extraReliefClaimable) + '/yr in further relief, via Self Assessment or a tax code adjustment &mdash; this is not automatic, is not reflected in take-home pay above, and should only be counted once it is actually received.'; }).join('<br>') +
+    withRelief.map(function (r) { return '&bull; "' + r.name + '": up to ' + fmtP(r.extraReliefClaimable) + perLabel + ' in further relief, via Self Assessment or a tax code adjustment &mdash; this is not automatic, is not reflected in take-home pay above, and should only be counted once it is actually received.'; }).join('<br>') +
     '</div>';
 }
 
@@ -742,9 +769,9 @@ function renderChart(baseline, results) {
     data: {
       labels: cols.map(function (c) { return c.name; }),
       datasets: [
-        { label: 'Take-home pay', data: cols.map(function (c) { return Math.round(c.takeHome); }), backgroundColor: '#1D353B' },
-        { label: 'Employee pension', data: cols.map(function (c) { return Math.round(c.eePensionGross); }), backgroundColor: '#c9a84c' },
-        { label: 'Employer pension', data: cols.map(function (c) { return Math.round(c.erPensionGross); }), backgroundColor: '#7F77DD' }
+        { label: 'Take-home pay', data: cols.map(function (c) { return Math.round(periodValue(c.takeHome)); }), backgroundColor: '#1D353B' },
+        { label: 'Employee pension', data: cols.map(function (c) { return Math.round(periodValue(c.eePensionGross)); }), backgroundColor: '#c9a84c' },
+        { label: 'Employer pension', data: cols.map(function (c) { return Math.round(periodValue(c.erPensionGross)); }), backgroundColor: '#7F77DD' }
       ]
     },
     options: {
@@ -785,9 +812,16 @@ document.querySelectorAll('.currency-input').forEach(function (el) {
 });
 wireToggle(document.getElementById('jurisdiction-toggle'), calc);
 wireToggle(document.getElementById('spa-toggle'), calc);
+wireToggle(document.getElementById('periodToggle'), function (v) {
+  displayPeriod = v;
+  var lbl = v === 'monthly' ? '(monthly)' : '(annual)';
+  document.getElementById('chart-period-lbl').textContent = lbl;
+  document.getElementById('table-period-lbl').textContent = lbl;
+  calc();
+});
 document.getElementById('add-scenario').addEventListener('click', function () { addScenarioCard(); calc(); });
 
-addScenarioCard({ name: 'Salary Sacrifice', method: 'sacrifice', basis: 'basic', amtType: 'pct', eeVal: 5, erVal: 3, niReinvestPct: 0.5 });
+addScenarioCard({ name: 'Salary Sacrifice', method: 'sacrifice', basis: 'basic', amtType: 'pct', eeVal: 5, erVal: 3, niReinvestPct: 0 });
 addScenarioCard({ name: 'Relief at Source', method: 'ras', basis: 'basic', amtType: 'pct', eeVal: 5, erVal: 3, niReinvestPct: 0 });
 calc();
 
