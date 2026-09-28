@@ -309,7 +309,7 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
     <div class="g3">
       <div><label>Annual salary (£, gross)</label><input type="text" id="salary" value="35,000" class="currency-input"></div>
       <div><label>Annual bonus (£, gross) <span class="tip" data-tip="Optional. If you sacrifice the bonus too, tick 'Also sacrifice the full annual bonus' on a Salary Sacrifice scenario below.">?</span></label><input type="text" id="bonus" value="0" class="currency-input"></div>
-      <div></div>
+      <div><label>Tax code <span class="tip" data-tip="Sets the personal allowance used in calculations. Standard L/M/N/T codes (e.g. 1257L) still get the usual income taper above £100,000. BR/D0/D1/NT apply a single flat rate to all income; 0T means no allowance; K codes (e.g. K475) add extra taxable income. A leading S or C is ignored — use the Tax jurisdiction toggle above for UK vs Scottish rates. BR/D0/D1 always use the rUK flat rates (20%/40%/45%) regardless of that toggle. Leave blank for the standard 1257L code.">?</span></label><input type="text" id="tax-code" value="1257L" placeholder="1257L"></div>
     </div>
   </div>
 
@@ -432,9 +432,10 @@ var AA_STANDARD = 60000;
 var MIN_ANNUAL_INCOME = 24785; // 2026/27 NLW £12.71/hr x 37.5hrs x 52wks — verify against latest published NLW before relying on this
 var MAX_SACRIFICE_PCT = 0.8;
 
-function taperedPA(gross) {
-  if (gross <= PA_TAPER_LIMIT) return PA_STANDARD;
-  return Math.max(0, PA_STANDARD - (gross - PA_TAPER_LIMIT) / 2);
+function taperedPA(gross, baseAllowance) {
+  baseAllowance = (baseAllowance === undefined) ? PA_STANDARD : baseAllowance;
+  if (gross <= PA_TAPER_LIMIT) return baseAllowance;
+  return Math.max(0, baseAllowance - (gross - PA_TAPER_LIMIT) / 2);
 }
 function taxFromBands(x, bands, topRate) {
   var tax = 0, rem = x;
@@ -446,10 +447,32 @@ function taxFromBands(x, bands, topRate) {
   }
   return tax + rem * topRate;
 }
-function incomeTax(gross, jurisdiction) {
+function parseTaxCode(code) {
+  code = (code || '').trim().toUpperCase();
+  if (!code) return { mode: 'allowance', allowance: PA_STANDARD, taper: true, code: '1257L' };
+  var body = code.replace(/^[SC]/, ''); // jurisdiction is set by the toggle, not the code prefix
+  if (body === 'BR') return { mode: 'flat', rate: 0.20, code: code };
+  if (body === 'D0') return { mode: 'flat', rate: 0.40, code: code };
+  if (body === 'D1') return { mode: 'flat', rate: 0.45, code: code };
+  if (body === 'NT') return { mode: 'flat', rate: 0, code: code };
+  if (body === '0T') return { mode: 'allowance', allowance: 0, taper: false, code: code };
+  var kMatch = /^K(\d{1,4})$/.exec(body);
+  if (kMatch) return { mode: 'k', addition: parseInt(kMatch[1], 10) * 10, code: code };
+  var stdMatch = /^(\d{1,4})[LMNT]$/.exec(body);
+  if (stdMatch) return { mode: 'allowance', allowance: parseInt(stdMatch[1], 10) * 10, taper: true, code: code };
+  return { mode: 'allowance', allowance: PA_STANDARD, taper: true, code: code, unrecognized: true };
+}
+function incomeTax(gross, jurisdiction, taxCodeInfo) {
   gross = Math.max(0, gross);
-  var pa = taperedPA(gross);
-  var x = Math.max(0, gross - pa);
+  taxCodeInfo = taxCodeInfo || { mode: 'allowance', allowance: PA_STANDARD, taper: true };
+  if (taxCodeInfo.mode === 'flat') return gross * taxCodeInfo.rate;
+  var x;
+  if (taxCodeInfo.mode === 'k') {
+    x = gross + taxCodeInfo.addition;
+  } else {
+    var pa = taxCodeInfo.taper ? taperedPA(gross, taxCodeInfo.allowance) : taxCodeInfo.allowance;
+    x = Math.max(0, gross - pa);
+  }
   if (jurisdiction === 'Scottish') {
     return taxFromBands(x, [[3967, 0.19], [12989, 0.20], [14136, 0.21], [31338, 0.42], [50140, 0.45]], 0.48);
   }
@@ -482,6 +505,7 @@ function annualAmount(amtType, val, base) {
 
 function computeScenario(person, sc) {
   var salary = person.salary, bonus = person.bonus || 0, jurisdiction = person.jurisdiction, aboveSPA = person.aboveSPA;
+  var taxCodeInfo = person.taxCodeInfo || { mode: 'allowance', allowance: PA_STANDARD, taper: true };
   var base = baseEarnings(sc.basis, salary, bonus);
   var eeAmt = Math.max(0, annualAmount(sc.amtType, sc.eeVal, base));
   var erAmt = Math.max(0, annualAmount(sc.amtType, sc.erVal, base));
@@ -507,13 +531,13 @@ function computeScenario(person, sc) {
     netDeduction = eeAmt * (1 - TAX_RELIEF);
     eePensionGross = eeAmt;
     erPensionGross = erAmt;
-    var taxNoRelief = incomeTax(grossIncomeBefore, jurisdiction);
-    var taxFullyRelieved = incomeTax(grossIncomeBefore - eeAmt, jurisdiction);
+    var taxNoRelief = incomeTax(grossIncomeBefore, jurisdiction, taxCodeInfo);
+    var taxFullyRelieved = incomeTax(grossIncomeBefore - eeAmt, jurisdiction, taxCodeInfo);
     var fullMarginalRelief = taxNoRelief - taxFullyRelieved;
     extraReliefClaimable = Math.max(0, fullMarginalRelief - eeAmt * TAX_RELIEF);
   }
 
-  var incomeTaxAmt = incomeTax(taxIncome, jurisdiction);
+  var incomeTaxAmt = incomeTax(taxIncome, jurisdiction, taxCodeInfo);
   var eeNI = aboveSPA ? 0 : employeeNI(niIncome);
   var erNIAfter = employerNI(niIncome);
   var erNIBefore = employerNI(grossIncomeBefore);
@@ -700,6 +724,9 @@ function mkChart(id, cfg) { if (CH[id]) { CH[id].destroy(); delete CH[id]; } var
 
 function renderAlerts(person, results) {
   var out = [];
+  if (person.taxCodeInfo && person.taxCodeInfo.unrecognized) {
+    out.push('<div class="warn">&#9888; Tax code "' + person.taxCodeInfo.code + '" was not recognised &mdash; falling back to the standard 1257L allowance. Supported formats: 1257L-style codes, BR, D0, D1, NT, 0T, K-codes (e.g. K475).</div>');
+  }
   results.forEach(function (r) {
     if (r.method === 'sacrifice' && r.totalSacrificed > (person.salary * MAX_SACRIFICE_PCT)) {
       out.push('<div class="warn">&#9888; "' + r.name + '": the sacrificed amount is more than ' + Math.round(MAX_SACRIFICE_PCT * 100) + '% of salary, which most scheme rules will not permit.</div>');
@@ -787,7 +814,8 @@ function calc() {
     salary: gv('salary'),
     bonus: gv('bonus'),
     jurisdiction: toggleVal(document.getElementById('jurisdiction-toggle')),
-    aboveSPA: toggleVal(document.getElementById('spa-toggle')) === 'yes'
+    aboveSPA: toggleVal(document.getElementById('spa-toggle')) === 'yes',
+    taxCodeInfo: parseTaxCode(fv('tax-code'))
   };
   document.querySelectorAll('.scenario-card').forEach(refreshScenarioCardVisibility);
   var baseline = computeBaseline(person);
@@ -812,6 +840,11 @@ document.querySelectorAll('.currency-input').forEach(function (el) {
 });
 wireToggle(document.getElementById('jurisdiction-toggle'), calc);
 wireToggle(document.getElementById('spa-toggle'), calc);
+document.getElementById('tax-code').addEventListener('input', calcDebounced);
+document.getElementById('tax-code').addEventListener('blur', function () {
+  var el = document.getElementById('tax-code');
+  el.value = (el.value || '').trim().toUpperCase();
+});
 wireToggle(document.getElementById('periodToggle'), function (v) {
   displayPeriod = v;
   var lbl = v === 'monthly' ? '(monthly)' : '(annual)';
