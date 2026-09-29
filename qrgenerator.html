@@ -58,6 +58,13 @@ input[type=color]{width:40px;height:32px;border-radius:6px;border:1px solid var(
 .slrow span{font-size:13px;min-width:32px}
 .main-btn{width:100%;padding:9px;font-size:14px;font-weight:600;background:var(--navy);color:#fff;border:none;border-radius:7px;cursor:pointer;margin-top:14px}
 .main-btn:hover{opacity:.9}
+.crop-overlay{display:none;position:fixed;inset:0;background:rgba(29,53,59,0.75);z-index:100;align-items:center;justify-content:center;padding:16px}
+.crop-overlay.active{display:flex}
+.crop-card{background:#fff;border-radius:10px;padding:18px;max-width:340px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,0.25)}
+.crop-viewport{width:100%;aspect-ratio:1/1;overflow:hidden;border-radius:8px;border:1px solid var(--border);position:relative;background:#f7f6f2;cursor:grab;touch-action:none}
+.crop-viewport.dragging{cursor:grabbing}
+.crop-viewport img{position:absolute;left:0;top:0;user-select:none;pointer-events:none}
+.crop-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 .preview-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;border-top:3px solid var(--gold)}
 .type-badge{font-size:11px;font-weight:700;color:var(--navy);background:var(--offwhite);border-radius:5px;padding:3px 8px;display:inline-block;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase}
 .dl-row{margin-top:10px;display:flex;gap:7px}
@@ -128,64 +135,69 @@ input[type=color]{width:40px;height:32px;border-radius:6px;border:1px solid var(
   </div>
 
   <div class="sec">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="wTab('style',this)">Style</button>
+      <button class="tab-btn" onclick="wTab('frame',this)">Frame & text</button>
+    </div>
+    <div id="wtab-style" class="tab-pane active">
+      <p class="sec-hd">Colours</p>
+      <div class="colrow"><label>QR foreground</label><input type="color" id="w-fg" value="#1D353B" oninput="regen()"></div>
+      <div class="colrow"><label>QR background</label><input type="color" id="w-bg" value="#ffffff" oninput="regen()"></div>
+      <div class="colrow"><label>Eye colour</label><input type="color" id="w-eye" value="#c9a84c" oninput="regen()"></div>
+      <p class="sec-hd" style="margin-top:12px">Dot style</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px">
+        <div class="wopt wopt-dot selected" onclick="wSel(this,'dot','square')"><div style="font-size:18px">&#9642;&#9642;&#9642;</div><div>Square</div></div>
+        <div class="wopt wopt-dot" onclick="wSel(this,'dot','round')"><div style="font-size:18px">&#9679;&#9679;&#9679;</div><div>Round</div></div>
+        <div class="wopt wopt-dot" onclick="wSel(this,'dot','dot')"><div style="font-size:12px">&#183; &#183; &#183;<br>&#183; &#183; &#183;</div><div>Dot</div></div>
+      </div>
+      <p class="sec-hd">Eye shape</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px">
+        <div class="wopt wopt-eye selected" onclick="wSel(this,'eye','square')"><div style="font-size:16px">&#9635;</div><div>Square</div></div>
+        <div class="wopt wopt-eye" onclick="wSel(this,'eye','round')"><div style="font-size:16px">&#9711;</div><div>Round</div></div>
+        <div class="wopt wopt-eye" onclick="wSel(this,'eye','dot')"><div style="font-size:16px">&#9679;</div><div>Dot</div></div>
+        <div class="wopt wopt-eye" onclick="wSel(this,'eye','leaf')"><div style="font-size:16px">&#9671;</div><div>Leaf</div></div>
+      </div>
+      <p class="sec-hd">Logo / centre image</p>
+      <input type="file" id="w-logo" accept="image/*" onchange="handleLogo(this)" style="font-size:13px;width:100%">
+      <div id="logo-preview-row" style="display:none;align-items:center;gap:10px;margin-top:8px">
+        <img id="logo-preview-thumb" style="width:40px;height:40px;border-radius:6px;border:1px solid var(--border);object-fit:cover">
+        <button type="button" class="wopt" style="padding:6px 10px" onclick="openCropper(true)">Re-crop</button>
+        <button type="button" class="wopt" style="padding:6px 10px" onclick="removeLogo()">Remove</button>
+      </div>
+      <div class="slrow"><label>Logo size</label><input type="range" id="w-lsz" min="10" max="30" value="20" step="1" oninput="document.getElementById('w-lsz-o').textContent=this.value+'%';regen()"><span id="w-lsz-o">20%</span></div>
+      <div class="slrow"><label>Logo padding</label><input type="range" id="w-lpad" min="0" max="20" value="6" step="1" oninput="document.getElementById('w-lpad-o').textContent=this.value+'px';regen()"><span id="w-lpad-o">6px</span></div>
+      <div class="colrow" style="margin-top:10px"><label>Logo background</label><input type="color" id="w-logobg" value="#ffffff" oninput="regen()"></div>
+    </div>
+    <div id="wtab-frame" class="tab-pane">
+      <p class="sec-hd">Frame style</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px">
+        <div class="wopt wopt-frame selected" onclick="wSel(this,'frame','none')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="4" y="4" width="32" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><div>None</div></div>
+        <div class="wopt wopt-frame" onclick="wSel(this,'frame','box')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="5" width="30" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1"/></svg><div>Box</div></div>
+        <div class="wopt wopt-frame" onclick="wSel(this,'frame','bottom')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="1" y="27" width="38" height="12" rx="0" fill="currentColor" opacity="0.2"/></svg><div>Banner</div></div>
+        <div class="wopt wopt-frame" onclick="wSel(this,'frame','rounded')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="10" fill="none" stroke="currentColor" stroke-width="2"/></svg><div>Rounded</div></div>
+      </div>
+      <div class="colrow"><label>Frame colour</label><input type="color" id="w-framecol" value="#1D353B" oninput="regen()"></div>
+      <p class="sec-hd" style="margin-top:12px">Text label</p>
+      <div class="fg"><label>Label text</label><input id="w-ftxt" type="text" placeholder="Scan to connect with us" oninput="regen()"></div>
+      <div class="colrow"><label>Label colour</label><input type="color" id="w-ftxtcol" value="#e8d08a" oninput="regen()"></div>
+      <div class="slrow"><label>Font size</label><input type="range" id="w-fsz" min="10" max="22" value="14" step="1" oninput="document.getElementById('w-fsz-o').textContent=this.value+'px';regen()"><span id="w-fsz-o">14px</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
     <div id="qm-vcard" class="qmode active">
-      <div class="tab-row">
-        <button class="tab-btn active" onclick="wTab('contact',this)">Contact details</button>
-        <button class="tab-btn" onclick="wTab('style',this)">Style</button>
-        <button class="tab-btn" onclick="wTab('frame',this)">Frame & text</button>
-      </div>
-      <div id="wtab-contact" class="tab-pane active">
-        <div class="g2">
-          <div class="fg"><label>First name</label><input id="v-fn" type="text" placeholder="Jane" oninput="regen()"></div>
-          <div class="fg"><label>Last name</label><input id="v-ln" type="text" placeholder="Smith" oninput="regen()"></div>
-          <div class="fg"><label>Job title</label><input id="v-jt" type="text" placeholder="Financial Adviser" oninput="regen()"></div>
-          <div class="fg"><label>Company</label><input id="v-co" type="text" placeholder="Warren House Employee Benefits" oninput="regen()"></div>
-          <div class="fg"><label>Work email</label><input id="v-em" type="email" placeholder="jane@warren-house.co.uk" oninput="regen()"></div>
-          <div class="fg"><label>Work phone</label><input id="v-ph" type="tel" placeholder="01908 326586" oninput="regen()"></div>
-          <div class="fg"><label>Mobile</label><input id="v-mb" type="tel" placeholder="+44 7700 900000" oninput="regen()"></div>
-          <div class="fg"><label>Website</label><input id="v-wb" type="url" placeholder="https://warren-house.co.uk" oninput="regen()"></div>
-          <div class="fg" style="grid-column:1/-1"><label>Address</label><input id="v-ad" type="text" placeholder="Warren House, Milton Keynes" oninput="regen()"></div>
-          <div class="fg"><label>LinkedIn URL</label><input id="v-li" type="url" placeholder="https://linkedin.com/in/..." oninput="regen()"></div>
-          <div class="fg"><label>Twitter / X</label><input id="v-tw" type="text" placeholder="@warrenhouse" oninput="regen()"></div>
-        </div>
-      </div>
-      <div id="wtab-style" class="tab-pane">
-        <p class="sec-hd">Colours</p>
-        <div class="colrow"><label>QR foreground</label><input type="color" id="w-fg" value="#1D353B" oninput="regen()"></div>
-        <div class="colrow"><label>QR background</label><input type="color" id="w-bg" value="#ffffff" oninput="regen()"></div>
-        <div class="colrow"><label>Eye colour</label><input type="color" id="w-eye" value="#c9a84c" oninput="regen()"></div>
-        <p class="sec-hd" style="margin-top:12px">Dot style</p>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px">
-          <div class="wopt wopt-dot selected" onclick="wSel(this,'dot','square')"><div style="font-size:18px">&#9642;&#9642;&#9642;</div><div>Square</div></div>
-          <div class="wopt wopt-dot" onclick="wSel(this,'dot','round')"><div style="font-size:18px">&#9679;&#9679;&#9679;</div><div>Round</div></div>
-          <div class="wopt wopt-dot" onclick="wSel(this,'dot','dot')"><div style="font-size:12px">&#183; &#183; &#183;<br>&#183; &#183; &#183;</div><div>Dot</div></div>
-        </div>
-        <p class="sec-hd">Eye shape</p>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px">
-          <div class="wopt wopt-eye selected" onclick="wSel(this,'eye','square')"><div style="font-size:16px">&#9635;</div><div>Square</div></div>
-          <div class="wopt wopt-eye" onclick="wSel(this,'eye','round')"><div style="font-size:16px">&#9711;</div><div>Round</div></div>
-          <div class="wopt wopt-eye" onclick="wSel(this,'eye','dot')"><div style="font-size:16px">&#9679;</div><div>Dot</div></div>
-          <div class="wopt wopt-eye" onclick="wSel(this,'eye','leaf')"><div style="font-size:16px">&#9671;</div><div>Leaf</div></div>
-        </div>
-        <p class="sec-hd">Logo / centre image</p>
-        <input type="file" id="w-logo" accept="image/*" onchange="handleLogo(this)" style="font-size:13px;width:100%">
-        <div class="slrow"><label>Logo size</label><input type="range" id="w-lsz" min="10" max="30" value="20" step="1" oninput="document.getElementById('w-lsz-o').textContent=this.value+'%';regen()"><span id="w-lsz-o">20%</span></div>
-        <div class="slrow"><label>Logo padding</label><input type="range" id="w-lpad" min="0" max="20" value="6" step="1" oninput="document.getElementById('w-lpad-o').textContent=this.value+'px';regen()"><span id="w-lpad-o">6px</span></div>
-        <div class="colrow" style="margin-top:10px"><label>Logo background</label><input type="color" id="w-logobg" value="#ffffff" oninput="regen()"></div>
-      </div>
-      <div id="wtab-frame" class="tab-pane">
-        <p class="sec-hd">Frame style</p>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px">
-          <div class="wopt wopt-frame selected" onclick="wSel(this,'frame','none')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="4" y="4" width="32" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><div>None</div></div>
-          <div class="wopt wopt-frame" onclick="wSel(this,'frame','box')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="5" y="5" width="30" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1"/></svg><div>Box</div></div>
-          <div class="wopt wopt-frame" onclick="wSel(this,'frame','bottom')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="1" y="27" width="38" height="12" rx="0" fill="currentColor" opacity="0.2"/></svg><div>Banner</div></div>
-          <div class="wopt wopt-frame" onclick="wSel(this,'frame','rounded')"><svg width="36" height="36" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="10" fill="none" stroke="currentColor" stroke-width="2"/></svg><div>Rounded</div></div>
-        </div>
-        <div class="colrow"><label>Frame colour</label><input type="color" id="w-framecol" value="#1D353B" oninput="regen()"></div>
-        <p class="sec-hd" style="margin-top:12px">Text label</p>
-        <div class="fg"><label>Label text</label><input id="w-ftxt" type="text" placeholder="Scan to connect with us" oninput="regen()"></div>
-        <div class="colrow"><label>Label colour</label><input type="color" id="w-ftxtcol" value="#e8d08a" oninput="regen()"></div>
-        <div class="slrow"><label>Font size</label><input type="range" id="w-fsz" min="10" max="22" value="14" step="1" oninput="document.getElementById('w-fsz-o').textContent=this.value+'px';regen()"><span id="w-fsz-o">14px</span></div>
+      <div class="g2">
+        <div class="fg"><label>First name</label><input id="v-fn" type="text" placeholder="Jane" oninput="regen()"></div>
+        <div class="fg"><label>Last name</label><input id="v-ln" type="text" placeholder="Smith" oninput="regen()"></div>
+        <div class="fg"><label>Job title</label><input id="v-jt" type="text" placeholder="Financial Adviser" oninput="regen()"></div>
+        <div class="fg"><label>Company</label><input id="v-co" type="text" placeholder="Warren House Employee Benefits" oninput="regen()"></div>
+        <div class="fg"><label>Work email</label><input id="v-em" type="email" placeholder="jane@warren-house.co.uk" oninput="regen()"></div>
+        <div class="fg"><label>Work phone</label><input id="v-ph" type="tel" placeholder="01908 326586" oninput="regen()"></div>
+        <div class="fg"><label>Mobile</label><input id="v-mb" type="tel" placeholder="+44 7700 900000" oninput="regen()"></div>
+        <div class="fg"><label>Website</label><input id="v-wb" type="url" placeholder="https://warren-house.co.uk" oninput="regen()"></div>
+        <div class="fg" style="grid-column:1/-1"><label>Address</label><input id="v-ad" type="text" placeholder="Warren House, Milton Keynes" oninput="regen()"></div>
+        <div class="fg"><label>LinkedIn URL</label><input id="v-li" type="url" placeholder="https://linkedin.com/in/..." oninput="regen()"></div>
+        <div class="fg"><label>Twitter / X</label><input id="v-tw" type="text" placeholder="@warrenhouse" oninput="regen()"></div>
       </div>
     </div>
 
@@ -249,7 +261,7 @@ input[type=color]{width:40px;height:32px;border-radius:6px;border:1px solid var(
 <div>
   <div class="preview-card">
     <div id="type-badge" class="type-badge">vCard</div>
-    <canvas id="qr-canvas" width="280" height="280" style="width:100%;border-radius:6px;display:block"></canvas>
+    <canvas id="qr-canvas" width="400" height="400" style="width:100%;border-radius:6px;display:block"></canvas>
     <div class="dl-row">
       <button class="dl-btn" onclick="dlQR('png')">&#8681; PNG</button>
       <button class="dl-btn" onclick="dlQR('svg')">&#8681; SVG</button>
@@ -273,6 +285,21 @@ input[type=color]{width:40px;height:32px;border-radius:6px;border:1px solid var(
 </div>
 
 </div>
+</div>
+
+<div id="crop-modal" class="crop-overlay">
+  <div class="crop-card">
+    <p class="sec-hd">Crop logo</p>
+    <div id="crop-viewport" class="crop-viewport">
+      <img id="crop-img" draggable="false">
+    </div>
+    <div class="slrow" style="margin-top:12px"><label>Zoom</label><input type="range" id="crop-zoom" min="100" max="300" value="100" step="1"><span id="crop-zoom-o">100%</span></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:6px">Drag the image to reposition it inside the square.</p>
+    <div class="crop-actions">
+      <button type="button" class="wopt" style="padding:8px 14px" onclick="closeCropper()">Cancel</button>
+      <button type="button" class="main-btn" style="width:auto;padding:8px 18px" onclick="applyCrop()">Apply</button>
+    </div>
+  </div>
 </div>
 
 <footer class="site-footer">
@@ -307,13 +334,22 @@ function fv(id){var e=document.getElementById(id);return e?e.value.trim():""}
 function setType(t,btn){document.querySelectorAll(".qtype-btn").forEach(function(b){b.classList.remove("active")});btn.classList.add("active");document.querySelectorAll(".qmode").forEach(function(m){m.classList.remove("active")});var m=document.getElementById("qm-"+t);if(m)m.classList.add("active");document.getElementById("type-badge").textContent=typeLabels[t]||t;document.getElementById("vcopy-btn").style.display=t==="vcard"?"block":"none";var tip=tips[t]||["",""];document.getElementById("active-tip").innerHTML='<p class="tip-title">'+tip[0]+'</p><p class="tip-body">'+tip[1]+"</p>";curType=t;regen()}
 function wTab(n,btn){document.querySelectorAll(".tab-pane").forEach(function(p){p.classList.remove("active")});document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.remove("active")});document.getElementById("wtab-"+n).classList.add("active");btn.classList.add("active")}
 function wSel(el,g,v){document.querySelectorAll(".wopt-"+g).forEach(function(e){e.classList.remove("selected")});el.classList.add("selected");opts[g]=v;regen()}
-function handleLogo(input){var f=input.files[0];if(!f){logoImg=null;regen();return}var r=new FileReader();r.onload=function(e){var i=new Image();i.onload=function(){logoImg=i;regen()};i.src=e.target.result};r.readAsDataURL(f)}
+var cropSourceImg=null,cropState=null;
+function handleLogo(input){var f=input.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){var i=new Image();i.onload=function(){cropSourceImg=i;openCropper()};i.src=e.target.result};r.readAsDataURL(f)}
+function openCropper(){if(!cropSourceImg)return;var modal=document.getElementById("crop-modal"),img=document.getElementById("crop-img"),vp=document.getElementById("crop-viewport");img.src=cropSourceImg.src;modal.classList.add("active");var vpSize=vp.clientWidth||220,baseScale=vpSize/Math.min(cropSourceImg.naturalWidth,cropSourceImg.naturalHeight);cropState={baseScale:baseScale,zoom:1,naturalW:cropSourceImg.naturalWidth,naturalH:cropSourceImg.naturalHeight,viewportSize:vpSize,panX:0,panY:0};document.getElementById("crop-zoom").value=100;document.getElementById("crop-zoom-o").textContent="100%";centerCrop();applyCropTransform()}
+function centerCrop(){var s=cropState.baseScale*cropState.zoom,dw=cropState.naturalW*s,dh=cropState.naturalH*s;cropState.panX=(cropState.viewportSize-dw)/2;cropState.panY=(cropState.viewportSize-dh)/2}
+function clampPan(){var s=cropState.baseScale*cropState.zoom,dw=cropState.naturalW*s,dh=cropState.naturalH*s,minX=cropState.viewportSize-dw,minY=cropState.viewportSize-dh;cropState.panX=Math.min(0,Math.max(minX,cropState.panX));cropState.panY=Math.min(0,Math.max(minY,cropState.panY))}
+function applyCropTransform(){var s=cropState.baseScale*cropState.zoom,img=document.getElementById("crop-img");img.style.width=(cropState.naturalW*s)+"px";img.style.height=(cropState.naturalH*s)+"px";img.style.left=cropState.panX+"px";img.style.top=cropState.panY+"px"}
+function closeCropper(){document.getElementById("crop-modal").classList.remove("active")}
+function applyCrop(){var s=cropState.baseScale*cropState.zoom,sx=-cropState.panX/s,sy=-cropState.panY/s,sSize=cropState.viewportSize/s;var out=document.createElement("canvas");out.width=320;out.height=320;out.getContext("2d").drawImage(cropSourceImg,sx,sy,sSize,sSize,0,0,320,320);logoImg=out;document.getElementById("logo-preview-thumb").src=out.toDataURL("image/png");document.getElementById("logo-preview-row").style.display="flex";closeCropper();regen()}
+function removeLogo(){logoImg=null;cropSourceImg=null;document.getElementById("logo-preview-row").style.display="none";document.getElementById("w-logo").value="";regen()}
+(function(){var vp=document.getElementById("crop-viewport"),dragging=false,startX=0,startY=0,startPanX=0,startPanY=0;vp.addEventListener("pointerdown",function(e){if(!cropState)return;dragging=true;vp.classList.add("dragging");vp.setPointerCapture(e.pointerId);startX=e.clientX;startY=e.clientY;startPanX=cropState.panX;startPanY=cropState.panY});vp.addEventListener("pointermove",function(e){if(!dragging||!cropState)return;cropState.panX=startPanX+(e.clientX-startX);cropState.panY=startPanY+(e.clientY-startY);clampPan();applyCropTransform()});function endDrag(){dragging=false;vp.classList.remove("dragging")}vp.addEventListener("pointerup",endDrag);vp.addEventListener("pointerleave",endDrag);document.getElementById("crop-zoom").addEventListener("input",function(){if(!cropState)return;cropState.zoom=parseInt(this.value,10)/100;document.getElementById("crop-zoom-o").textContent=this.value+"%";clampPan();applyCropTransform()})})();
 function buildVcard(){var fn=fv("v-fn"),ln=fv("v-ln");if(!fn&&!ln)return"BEGIN:VCARD\nVERSION:3.0\nFN:Warren House\nORG:Warren House Employee Benefits\nURL:https://warren-house.co.uk\nEND:VCARD";var vc="BEGIN:VCARD\nVERSION:3.0\n";vc+="N:"+ln+";"+fn+";\nFN:"+fn+" "+ln+"\n";if(fv("v-jt"))vc+="TITLE:"+fv("v-jt")+"\n";if(fv("v-co"))vc+="ORG:"+fv("v-co")+"\n";if(fv("v-em"))vc+="EMAIL;TYPE=WORK:"+fv("v-em")+"\n";if(fv("v-ph"))vc+="TEL;TYPE=WORK,VOICE:"+fv("v-ph")+"\n";if(fv("v-mb"))vc+="TEL;TYPE=CELL:"+fv("v-mb")+"\n";if(fv("v-wb"))vc+="URL:"+fv("v-wb")+"\n";if(fv("v-ad"))vc+="ADR;TYPE=WORK:;;"+fv("v-ad")+";;;;\n";if(fv("v-li"))vc+="X-SOCIALPROFILE;TYPE=linkedin:"+fv("v-li")+"\n";if(fv("v-tw"))vc+="X-SOCIALPROFILE;TYPE=twitter:"+fv("v-tw")+"\n";return vc+"END:VCARD"}
 function buildPayload(){switch(curType){case"vcard":return buildVcard();case"url":return fv("u-url")||"https://warren-house.co.uk";case"email":{var to=fv("e-to"),sub=fv("e-sub"),body=fv("e-body");if(!to)return"mailto:whteam@warren-house.co.uk";var s="mailto:"+to,p=[];if(sub)p.push("subject="+encodeURIComponent(sub));if(body)p.push("body="+encodeURIComponent(body));return p.length?s+"?"+p.join("&"):s}case"phone":return"tel:"+(fv("p-num")||"01908326586");case"sms":{var n=fv("s-num"),msg=fv("s-msg");return msg?"smsto:"+n+":"+msg:"sms:"+n}case"wifi":{var escW=function(s){return(s||"").replace(/([\\;,:"])/g,"\\$1")},ss=escW(fv("w-ssid")),pw=escW(fv("w-pass")),sec=fv("w-sec")||"WPA";return"WIFI:T:"+sec+";S:"+ss+";P:"+pw+";;"}case"location":{var lat=fv("l-lat"),lng=fv("l-lng"),addr=fv("l-addr");return lat&&lng?"geo:"+lat+","+lng:"https://maps.google.com/?q="+encodeURIComponent(addr||"Warren House Milton Keynes")}case"event":{var fmt=function(d){return d?d.replace(/[-:T]/g,"").substring(0,15)+"00Z":""};return"BEGIN:VEVENT\nSUMMARY:"+(fv("ev-title")||"Event")+"\nDTSTART:"+fmt(fv("ev-start"))+"\nDTEND:"+fmt(fv("ev-end"))+"\nLOCATION:"+fv("ev-loc")+"\nDESCRIPTION:"+fv("ev-desc")+"\nEND:VEVENT"}case"text":return fv("t-txt")||"Warren House Employee Benefits";case"linkedin":return fv("li-url")||"https://linkedin.com/company/warren-house";case"teams":return fv("tm-url")||"https://teams.microsoft.com";case"payment":return fv("pay-url")||"https://warren-house.co.uk";default:return"https://warren-house.co.uk"}}
-function drawCell(ctx,x,y,size,style,color){ctx.fillStyle=color;var margin=size*0.08,s=size-margin*2;if(style==="round"){ctx.beginPath();ctx.roundRect(x+margin,y+margin,s,s,s*0.35);ctx.fill()}else if(style==="dot"){ctx.beginPath();ctx.arc(x+size/2,y+size/2,s*0.42,0,Math.PI*2);ctx.fill()}else{ctx.fillRect(x+margin,y+margin,s,s)}}
+function drawCell(ctx,x,y,size,style,color){ctx.fillStyle=color;if(style==="square"){ctx.fillRect(x,y,size,size);return}var margin=size*0.08,s=size-margin*2;if(style==="round"){ctx.beginPath();ctx.roundRect(x+margin,y+margin,s,s,s*0.35);ctx.fill()}else{ctx.beginPath();ctx.arc(x+size/2,y+size/2,s*0.42,0,Math.PI*2);ctx.fill()}}
 function drawEye(ctx,ox,oy,cs,style,fg,bg){var tot=cs*7,r=style==="round"?tot*0.28:style==="dot"?tot*0.5:style==="leaf"?tot*0.22:3,ri=style==="round"?(cs*3)*0.4:style==="dot"?(cs*3)*0.5:style==="leaf"?(cs*3)*0.28:3;ctx.fillStyle=fg;ctx.beginPath();ctx.roundRect(ox,oy,tot,tot,r);ctx.fill();ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(ox+cs,oy+cs,cs*5,cs*5,r*0.5);ctx.fill();ctx.fillStyle=fg;ctx.beginPath();ctx.roundRect(ox+cs*2,oy+cs*2,cs*3,cs*3,ri);ctx.fill()}
 function isEye(row,col,size){return(row<7&&col<7)||(row<7&&col>=size-7)||(row>=size-7&&col<7)}
-function doRender(){var payload=buildPayload();var canvas=document.getElementById("qr-canvas"),ctx=canvas.getContext("2d");var fgCol=document.getElementById("w-fg").value,bgCol=document.getElementById("w-bg").value,eyeCol=document.getElementById("w-eye").value;var fs=opts.frame,fcol=document.getElementById("w-framecol").value,ftxt=fv("w-ftxt");if(!ftxt&&curType==="payment")ftxt=fv("pay-lbl");if(!ftxt&&curType==="url")ftxt=fv("u-lbl");var ftxtcol=document.getElementById("w-ftxtcol").value,ffsz=parseInt(document.getElementById("w-fsz").value)||14;try{var qr=qrcode(0,"M");qr.addData(payload);qr.make();var mc=qr.getModuleCount(),hasFrame=fs!=="none",bannerH=(hasFrame&&ftxt&&fs==="bottom")?ffsz+18:0,extraH=(hasFrame&&ftxt&&fs!=="bottom")?ffsz+14:0,fp=hasFrame?14:0,fr=fs==="rounded"?18:5,W=280,qa=W-fp*2-bannerH,cs=Math.floor(qa/mc),qPx=cs*mc,qX=fp+Math.floor((W-fp*2-qPx)/2),qY=fp+Math.floor((qa-qPx)/2),TH=W+bannerH+extraH+(hasFrame?fp:0);canvas.width=W;canvas.height=TH;ctx.clearRect(0,0,W,TH);if(hasFrame){ctx.fillStyle=fcol;ctx.beginPath();ctx.roundRect(0,0,W,TH,fr);ctx.fill()}ctx.fillStyle=bgCol;if(hasFrame){ctx.beginPath();ctx.roundRect(qX-4,qY-4,qPx+8,qPx+8,4);ctx.fill()}else{ctx.fillRect(0,0,W,W)}for(var row=0;row<mc;row++)for(var col=0;col<mc;col++){if(!qr.isDark(row,col)||isEye(row,col,mc))continue;drawCell(ctx,qX+col*cs,qY+row*cs,cs,opts.dot,fgCol)}[[0,0],[0,mc-7],[mc-7,0]].forEach(function(e){drawEye(ctx,qX+e[1]*cs,qY+e[0]*cs,cs,opts.eye,eyeCol,bgCol)});if(logoImg){var lp=parseInt(document.getElementById("w-lpad").value)||6,ls=qPx*(parseInt(document.getElementById("w-lsz").value)||20)/100,lx=qX+(qPx-ls)/2,ly=qY+(qPx-ls)/2,lbc=document.getElementById("w-logobg").value;ctx.fillStyle=lbc;ctx.beginPath();ctx.roundRect(lx-lp,ly-lp,ls+lp*2,ls+lp*2,6);ctx.fill();ctx.drawImage(logoImg,lx,ly,ls,ls)}if(hasFrame&&ftxt){ctx.fillStyle=ftxtcol;ctx.font="600 "+ffsz+"px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";ctx.textAlign="center";if(fs==="bottom"){ctx.fillText(ftxt,W/2,qY+qPx+bannerH/2+ffsz/3)}else{ctx.fillText(ftxt,W/2,TH-8)}}}catch(err){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#f7f6f2";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#666";ctx.font="13px sans-serif";ctx.textAlign="center";ctx.fillText("Could not generate — try shorter content",canvas.width/2,canvas.height/2)}}
+function doRender(){var payload=buildPayload();var canvas=document.getElementById("qr-canvas"),ctx=canvas.getContext("2d");var fgCol=document.getElementById("w-fg").value,bgCol=document.getElementById("w-bg").value,eyeCol=document.getElementById("w-eye").value;var fs=opts.frame,fcol=document.getElementById("w-framecol").value,ftxt=fv("w-ftxt");if(!ftxt&&curType==="payment")ftxt=fv("pay-lbl");if(!ftxt&&curType==="url")ftxt=fv("u-lbl");var ftxtcol=document.getElementById("w-ftxtcol").value,ffsz=parseInt(document.getElementById("w-fsz").value)||14;try{var qr=qrcode(0,"H");qr.addData(payload);qr.make();var mc=qr.getModuleCount(),QUIET=4,hasFrame=fs!=="none",bannerH=(hasFrame&&ftxt&&fs==="bottom")?ffsz+18:0,extraH=(hasFrame&&ftxt&&fs!=="bottom")?ffsz+14:0,fp=hasFrame?14:0,fr=fs==="rounded"?18:5,W=400,qa=W-fp*2-bannerH,cs=Math.max(1,Math.floor(qa/(mc+QUIET*2))),qPx=cs*mc,quietPx=cs*QUIET,contentPx=qPx+quietPx*2,qX=fp+Math.floor((W-fp*2-contentPx)/2)+quietPx,qY=fp+Math.floor((qa-contentPx)/2)+quietPx,TH=W+bannerH+extraH+(hasFrame?fp:0);canvas.width=W;canvas.height=TH;ctx.clearRect(0,0,W,TH);if(hasFrame){ctx.fillStyle=fcol;ctx.beginPath();ctx.roundRect(0,0,W,TH,fr);ctx.fill()}ctx.fillStyle=bgCol;if(hasFrame){ctx.beginPath();ctx.roundRect(qX-quietPx,qY-quietPx,contentPx,contentPx,4);ctx.fill()}else{ctx.fillRect(0,0,W,W)}for(var row=0;row<mc;row++)for(var col=0;col<mc;col++){if(!qr.isDark(row,col)||isEye(row,col,mc))continue;drawCell(ctx,qX+col*cs,qY+row*cs,cs,opts.dot,fgCol)}[[0,0],[0,mc-7],[mc-7,0]].forEach(function(e){drawEye(ctx,qX+e[1]*cs,qY+e[0]*cs,cs,opts.eye,eyeCol,bgCol)});if(logoImg){var lp=parseInt(document.getElementById("w-lpad").value)||6,ls=qPx*(parseInt(document.getElementById("w-lsz").value)||20)/100,lx=qX+(qPx-ls)/2,ly=qY+(qPx-ls)/2,lbc=document.getElementById("w-logobg").value;ctx.fillStyle=lbc;ctx.beginPath();ctx.roundRect(lx-lp,ly-lp,ls+lp*2,ls+lp*2,6);ctx.fill();ctx.drawImage(logoImg,lx,ly,ls,ls)}if(hasFrame&&ftxt){ctx.fillStyle=ftxtcol;ctx.font="600 "+ffsz+"px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";ctx.textAlign="center";if(fs==="bottom"){ctx.fillText(ftxt,W/2,qY+qPx+bannerH/2+ffsz/3)}else{ctx.fillText(ftxt,W/2,TH-8)}}}catch(err){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#f7f6f2";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#666";ctx.font="13px sans-serif";ctx.textAlign="center";ctx.fillText("Could not generate — try shorter content",canvas.width/2,canvas.height/2)}}
 function regen(){clearTimeout(timer);timer=setTimeout(doRender,150)}
 function dlQR(type){var canvas=document.getElementById("qr-canvas"),labels={vcard:"contact",url:"website",email:"email",phone:"phone",sms:"sms",wifi:"wifi",location:"location",event:"event",text:"text",linkedin:"linkedin",teams:"teams",payment:"payment"},n="warren-house-qr-"+(labels[curType]||"qr");if(type==="png"){var a=document.createElement("a");a.download=n+".png";a.href=canvas.toDataURL("image/png");a.click()}else{var img=canvas.toDataURL("image/png"),w=canvas.width,h=canvas.height,svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'"><image href="'+img+'" width="'+w+'" height="'+h+'"/></svg>',b=new Blob([svg],{type:"image/svg+xml"}),a=document.createElement("a");a.download=n+".svg";a.href=URL.createObjectURL(b);a.click()}}
 function copyVcard(){var vc=buildVcard();navigator.clipboard.writeText(vc).then(function(){var el=document.getElementById("copied-msg");el.style.display="block";setTimeout(function(){el.style.display="none"},2000)})}
