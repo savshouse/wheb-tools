@@ -570,7 +570,8 @@ function computeBaseline(person) {
 // ---------------------------------------------------------------------
 // Formatting helpers
 // ---------------------------------------------------------------------
-function fmtM(n) { return '£' + Math.round(n).toLocaleString('en-GB'); }
+function fmtM(n) { return '£' + (Math.round((n || 0) * 100) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtAxis(n) { return '£' + Math.round(n).toLocaleString('en-GB'); }
 var displayPeriod = 'annual';
 function periodValue(annualAmount) { return displayPeriod === 'monthly' ? annualAmount / 12 : annualAmount; }
 function fmtP(annualAmount) { return fmtM(periodValue(annualAmount)); }
@@ -806,14 +807,14 @@ function renderChart(baseline, results) {
     data: {
       labels: cols.map(function (c) { return c.name; }),
       datasets: [
-        { label: 'Take-home pay', data: cols.map(function (c) { return Math.round(periodValue(c.takeHome)); }), backgroundColor: '#1D353B' },
-        { label: 'Employee pension', data: cols.map(function (c) { return Math.round(periodValue(c.eePensionGross)); }), backgroundColor: '#c9a84c' },
-        { label: 'Employer pension', data: cols.map(function (c) { return Math.round(periodValue(c.erPensionGross)); }), backgroundColor: '#7F77DD' }
+        { label: 'Take-home pay', data: cols.map(function (c) { return periodValue(c.takeHome); }), backgroundColor: '#1D353B' },
+        { label: 'Employee pension', data: cols.map(function (c) { return periodValue(c.eePensionGross); }), backgroundColor: '#c9a84c' },
+        { label: 'Employer pension', data: cols.map(function (c) { return periodValue(c.erPensionGross); }), backgroundColor: '#7F77DD' }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, ticks: { callback: function (v) { return fmtM(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } } },
+      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, ticks: { callback: function (v) { return fmtAxis(v); } }, grid: { color: 'rgba(0,0,0,0.05)' } } },
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: function (c) { return ' ' + c.dataset.label + ': ' + fmtM(c.raw); } } } }
     }
   });
