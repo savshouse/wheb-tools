@@ -309,7 +309,7 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
     <div class="g3">
       <div><label>Annual salary (£, gross)</label><input type="text" id="salary" value="35,000" class="currency-input"></div>
       <div><label>Annual bonus (£, gross) <span class="tip" data-tip="Optional. If you sacrifice the bonus too, tick 'Also sacrifice the full annual bonus' on a Salary Sacrifice scenario below.">?</span></label><input type="text" id="bonus" value="0" class="currency-input"></div>
-      <div><label>Tax code <span class="tip" data-tip="Sets the personal allowance used in calculations. Standard L/M/N/T codes (e.g. 1257L) still get the usual income taper above £100,000. BR/D0/D1/NT apply a single flat rate to all income; 0T means no allowance; K codes (e.g. K475) add extra taxable income. A leading S or C is ignored — use the Tax jurisdiction toggle above for UK vs Scottish rates. BR/D0/D1 always use the rUK flat rates (20%/40%/45%) regardless of that toggle. Leave blank for the standard 1257L code.">?</span></label><input type="text" id="tax-code" value="1257L" placeholder="1257L"></div>
+      <div><label>Tax code <span class="tip" data-tip="Sets the personal allowance used in calculations. Standard L/M/N/T codes (e.g. 1257L) have their allowance automatically tapered by £1 for every £2 of a scenario's own modelled income above £100,000, down to £0 by £125,140 &mdash; this happens automatically from each scenario's figures, so you never need to adjust the code number yourself as income changes. If you enter a code HMRC has already reduced for a specific income level, this automatic taper is applied on top of it and may double-count &mdash; use 1257L and let the tool taper it instead if you're unsure. BR/D0/D1/NT apply a single flat rate to all income (no allowance, no taper); 0T means no allowance at any income; K codes (e.g. K475) add extra taxable income (no allowance, no taper). A leading S or C is ignored — use the Tax jurisdiction toggle above for UK vs Scottish rates. BR/D0/D1 always use the rUK flat rates (20%/40%/45%) regardless of that toggle. Leave blank for the standard 1257L code.">?</span></label><input type="text" id="tax-code" value="1257L" placeholder="1257L"></div>
     </div>
   </div>
 
@@ -730,10 +730,25 @@ document.addEventListener('click', hideTip);
 // ---------------------------------------------------------------------
 function mkChart(id, cfg) { if (CH[id]) { CH[id].destroy(); delete CH[id]; } var el = document.getElementById(id); if (el && window.Chart) CH[id] = new Chart(el, cfg); }
 
+function taxCodeNoteHTML(tci) {
+  if (tci.mode === 'flat') {
+    return '&#8505; Using tax code "' + tci.code + '" &mdash; a flat ' + (tci.rate * 100) + '% rate is applied to all taxable income; the personal allowance and its £100,000+ taper do not apply.';
+  }
+  if (tci.mode === 'k') {
+    return '&#8505; Using tax code "' + tci.code + '" &mdash; £' + tci.addition.toLocaleString('en-GB') + ' is added to taxable income each year with no personal allowance; the £100,000+ taper does not apply to K codes.';
+  }
+  if (!tci.taper) {
+    return '&#8505; Using tax code "' + tci.code + '" &mdash; no personal allowance is applied at any income level.';
+  }
+  return '&#8505; Using tax code "' + tci.code + '" &mdash; its £' + tci.allowance.toLocaleString('en-GB') + ' allowance is automatically tapered further for any scenario with modelled income above £100,000, the same as the standard 1257L code. If this code already reflects an HMRC reduction for a specific income level, this may taper it a second time &mdash; use 1257L and let the tool taper it instead if unsure.';
+}
+
 function renderAlerts(person, results) {
   var out = [];
   if (person.taxCodeInfo && person.taxCodeInfo.unrecognized) {
     out.push('<div class="warn">&#9888; Tax code "' + person.taxCodeInfo.code + '" was not recognised &mdash; falling back to the standard 1257L allowance. Supported formats: 1257L-style codes, BR, D0, D1, NT, 0T, K-codes (e.g. K475).</div>');
+  } else if (person.taxCodeInfo && person.taxCodeInfo.code !== '1257L') {
+    out.push('<div class="warn">' + taxCodeNoteHTML(person.taxCodeInfo) + '</div>');
   }
   results.forEach(function (r) {
     if (r.method === 'sacrifice' && r.totalSacrificed > (person.salary * MAX_SACRIFICE_PCT)) {
