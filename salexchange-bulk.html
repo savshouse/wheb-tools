@@ -305,18 +305,9 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
       <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
       <p class="stitle">Scheme settings</p>
     </div>
-    <div class="g2">
-      <div>
-        <label>Employer NI saving reinvested as pension rebate (%) <span class="tip" data-tip="Scheme-wide rate. When an employee sacrifices salary, the employer usually saves 15% employer NI on the sacrificed amount. Enter the percentage of that saving this scheme reinvests &mdash; the tool calculates the &pound; amount per employee from their own NI saving. Enter 0 if the employer keeps the whole saving.">?</span></label>
-        <input type="number" id="ni-rebate-pct" value="0" min="0" max="100" step="1">
-      </div>
-      <div>
-        <label>Reinvest this saving as <span class="tip" data-tip="Choose whether the calculated NI rebate is added to each employee's pension contribution (and counted in Total Contribution Amount), or given back to them as extra take-home pay instead (shown separately, not counted in Total Contribution Amount).">?</span></label>
-        <div class="mode-toggle seg-full" id="ni-rebate-target-toggle">
-          <button type="button" class="mode-btn active" data-val="pension">Pension contribution</button>
-          <button type="button" class="mode-btn" data-val="takehome">Take-home pay</button>
-        </div>
-      </div>
+    <div style="max-width:360px">
+      <label>Employer NI saving reinvested as pension rebate (%) <span class="tip" data-tip="Scheme-wide rate. When an employee sacrifices salary, the employer usually saves 15% employer NI on the sacrificed amount. Enter the percentage of that saving this scheme reinvests &mdash; the tool calculates the &pound; amount per employee from their own NI saving and always adds it to that employee's pension contribution. The employer's own NI saving can never be paid out as take-home pay. Enter 0 if the employer keeps the whole saving.">?</span></label>
+      <input type="number" id="ni-rebate-pct" value="0" min="0" max="100" step="1">
     </div>
   </div>
 
@@ -357,7 +348,7 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
       <div class="metric"><p class="ml">Employees</p><p class="mv" id="sum-count">0</p><p class="ms">in this scheme</p></div>
       <div class="metric"><p class="ml">Total employee contributions</p><p class="mv" id="sum-ee">&pound;0.00</p><p class="ms">this period</p></div>
       <div class="metric"><p class="ml">Total employer contributions</p><p class="mv" id="sum-er">&pound;0.00</p><p class="ms">this period</p></div>
-      <div class="metric"><p class="ml" id="sum-nirebate-label">Total NI rebate reinvested</p><p class="mv" id="sum-nirebate">&pound;0.00</p><p class="ms" id="sum-nirebate-note">this period</p></div>
+      <div class="metric"><p class="ml">Total NI rebate reinvested</p><p class="mv" id="sum-nirebate">&pound;0.00</p><p class="ms">this period</p></div>
       <div class="metric"><p class="ml">Total employer single (bonus sacrifice)</p><p class="mv" id="sum-single">&pound;0.00</p><p class="ms">this period</p></div>
       <div class="metric"><p class="ml">Total effective contribution</p><p class="mv" id="sum-total">&pound;0.00</p><p class="ms">this period</p></div>
     </div>
@@ -382,7 +373,7 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
     <div class="assumptions-body">
       <p><strong>Salary Sacrifice only:</strong> this tool models Salary Sacrifice pension contributions only. Each employee's contribution is treated as an employer pension contribution, reducing pay before it is used in the calculations below &mdash; it does not model Net Pay or Relief at Source arrangements for groups (use the single-person Salary Exchange Calculator for those).</p>
       <p><strong>Pensionable earnings:</strong> calculated as Period Earnings (PCM) &times; Alteration Factor for each employee, with no qualifying-earnings banding applied &mdash; contribution rates are applied directly to this figure. Annual Salary is shown for reference only and does not feed into any calculation.</p>
-      <p><strong>Employer NI saving &amp; rebate:</strong> the employer NI saving on each employee's sacrificed amount is estimated using the 2026/27 annual secondary threshold (&pound;5,000) divided by 12 and the 15% employer NI rate, applied to that employee's own pensionable earnings before and after their sacrifice. This is a simplified monthly approximation of a calculation your payroll software will perform against the correct period thresholds and cumulative NI position, so treat these figures as indicative. The scheme-wide rebate percentage you enter is applied to each employee's own estimated saving. Choose whether that rebate is reinvested into the pension (counted in Total Contribution Amount) or paid back as extra take-home pay instead &mdash; the NI Rebate column always shows the calculated &pound; amount either way, but it is only added into Total Contribution Amount when reinvested into the pension.</p>
+      <p><strong>Employer NI saving &amp; rebate:</strong> the employer NI saving on each employee's sacrificed amount is estimated using the 2026/27 annual secondary threshold (&pound;5,000) divided by 12 and the 15% employer NI rate, applied to that employee's own pensionable earnings before and after their sacrifice. This is a simplified monthly approximation of a calculation your payroll software will perform against the correct period thresholds and cumulative NI position, so treat these figures as indicative. The scheme-wide rebate percentage you enter is applied to each employee's own estimated saving and always added into their pension contribution (counted in Total Contribution Amount) &mdash; the employer's own NI saving can never be paid out as take-home pay.</p>
       <p><strong>State Pension age flag:</strong> estimated from date of birth using the same simplified DWP transitional-band approach as the Retirement Planner. It is shown as an informational flag only &mdash; it does not change any of the contribution figures in this tool, since employee National Insurance treatment for employees above State Pension age should be confirmed and applied in your payroll system.</p>
       <p><strong>Minimum wage flag:</strong> compares post-sacrifice pay for the period, divided by hours worked (Hours Per Week, pro-rated by Alteration Factor for the month), against the 2026/27 age-banded National Minimum/Living Wage rates (21 and over: &pound;12.71/hr; 18&ndash;20: &pound;10.85/hr; under 18: &pound;8.00/hr). It does not know about apprentice status, so apprentice rates are not modelled &mdash; check apprentices individually.</p>
       <p><strong>Not modelled:</strong> income tax, employee National Insurance, take-home pay, Net Pay/Relief at Source arrangements, qualifying-earnings banding, and Annual Allowance tapering or MPAA restrictions &mdash; use the single-person Salary Exchange Calculator and the Annual Allowance Calculator alongside this tool for those.</p>
@@ -504,12 +495,7 @@ function getNiRebatePct() {
   var v = parseFloat(document.getElementById('ni-rebate-pct').value);
   return isNaN(v) ? 0 : v;
 }
-function getNiRebateTarget() {
-  var el = document.querySelector('#ni-rebate-target-toggle .mode-btn.active');
-  return el ? el.dataset.val : 'pension';
-}
-
-function computeEmployee(emp, niRebatePct, niRebateTarget) {
+function computeEmployee(emp, niRebatePct) {
   var periodEarnings = emp.periodEarnings || 0;
   var alteration = (emp.alterationFactor === '' || emp.alterationFactor === null || isNaN(emp.alterationFactor)) ? 1 : emp.alterationFactor;
   alteration = Math.max(0, Math.min(1, alteration));
@@ -517,10 +503,9 @@ function computeEmployee(emp, niRebatePct, niRebateTarget) {
   var eeAmt = pensionable * ((emp.eeRate || 0) / 100);
   var erAmt = pensionable * ((emp.erRate || 0) / 100);
   var niSaving = Math.max(0, employerNIMonthly(pensionable) - employerNIMonthly(pensionable - eeAmt));
-  var niRebate = niSaving * (niRebatePct / 100);
-  var rebateToPension = (niRebateTarget !== 'takehome');
+  var niRebate = niSaving * (niRebatePct / 100); // employer's own NI saving, if reinvested, always goes into the pension
   var employerSingle = emp.employerSingle || 0;
-  var total = eeAmt + erAmt + (rebateToPension ? niRebate : 0) + employerSingle;
+  var total = eeAmt + erAmt + niRebate + employerSingle;
 
   var age = ageFromDOB(emp.dob);
   var aboveSPA = isAboveSPA(emp.dob);
@@ -532,7 +517,7 @@ function computeEmployee(emp, niRebatePct, niRebateTarget) {
   var nmwBreach = (hourlyRate !== null && floor !== null && hourlyRate < floor);
 
   return {
-    pensionable: pensionable, eeAmt: eeAmt, erAmt: erAmt, niSaving: niSaving, niRebate: niRebate, rebateToPension: rebateToPension,
+    pensionable: pensionable, eeAmt: eeAmt, erAmt: erAmt, niSaving: niSaving, niRebate: niRebate,
     employerSingle: employerSingle, total: total, age: age, aboveSPA: aboveSPA,
     hourlyRate: hourlyRate, nmwFloor: floor, nmwBreach: nmwBreach
   };
@@ -548,11 +533,6 @@ function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').repla
 // ---------------------------------------------------------------------
 // Table rendering
 // ---------------------------------------------------------------------
-function niRebateCellText(r) {
-  if (!r.niRebate) return fmt2(r.niRebate);
-  return fmt2(r.niRebate) + (r.rebateToPension ? '' : ' → take-home');
-}
-
 function flagsHTML(r) {
   var flags = [];
   if (r.aboveSPA) flags.push('<span class="flag-spa" title="Above State Pension age — confirm employee NI treatment in payroll">SPA</span>');
@@ -561,7 +541,7 @@ function flagsHTML(r) {
 }
 
 function rowHTML(emp, idx) {
-  var r = computeEmployee(emp, getNiRebatePct(), getNiRebateTarget());
+  var r = computeEmployee(emp, getNiRebatePct());
   return '<tr data-idx="' + idx + '">' +
     '<td><input type="text" data-field="empNo" value="' + esc(emp.empNo) + '" placeholder="EMP001"></td>' +
     '<td><input type="date" data-field="dob" value="' + esc(emp.dob) + '"></td>' +
@@ -574,7 +554,7 @@ function rowHTML(emp, idx) {
     '<td><input type="number" step="0.1" min="0" data-field="erRate" value="' + emp.erRate + '"></td>' +
     '<td class="calc c-eeamt">' + fmt2(r.eeAmt) + '</td>' +
     '<td class="calc c-eramt">' + fmt2(r.erAmt) + '</td>' +
-    '<td class="calc c-nirebate">' + niRebateCellText(r) + '</td>' +
+    '<td class="calc c-nirebate">' + fmt2(r.niRebate) + '</td>' +
     '<td><input type="text" class="currency-input" data-field="employerSingle" value="' + numFmt(emp.employerSingle) + '"></td>' +
     '<td class="calc c-total">' + fmt2(r.total) + '</td>' +
     '<td class="c-flags">' + flagsHTML(r) + '</td>' +
@@ -590,13 +570,13 @@ function renderTable() {
 function recalcRow(idx, skipSummary) {
   var emp = employees[idx];
   if (!emp) return;
-  var r = computeEmployee(emp, getNiRebatePct(), getNiRebateTarget());
+  var r = computeEmployee(emp, getNiRebatePct());
   var tr = document.querySelector('#emp-tbody tr[data-idx="' + idx + '"]');
   if (tr) {
     tr.querySelector('.c-pensionable').textContent = fmt2(r.pensionable);
     tr.querySelector('.c-eeamt').textContent = fmt2(r.eeAmt);
     tr.querySelector('.c-eramt').textContent = fmt2(r.erAmt);
-    tr.querySelector('.c-nirebate').textContent = niRebateCellText(r);
+    tr.querySelector('.c-nirebate').textContent = fmt2(r.niRebate);
     tr.querySelector('.c-total').textContent = fmt2(r.total);
     tr.querySelector('.c-flags').innerHTML = flagsHTML(r);
   }
@@ -612,10 +592,9 @@ function recalcAllDebounced() { clearTimeout(recalcAllTimer); recalcAllTimer = s
 
 function renderSummary() {
   var niRebatePct = getNiRebatePct();
-  var niRebateTarget = getNiRebateTarget();
   var totalEE = 0, totalER = 0, totalNIRebate = 0, totalSingle = 0, totalAll = 0, spaCount = 0, nmwCount = 0;
   employees.forEach(function (emp) {
-    var r = computeEmployee(emp, niRebatePct, niRebateTarget);
+    var r = computeEmployee(emp, niRebatePct);
     totalEE += r.eeAmt; totalER += r.erAmt; totalNIRebate += r.niRebate; totalSingle += r.employerSingle; totalAll += r.total;
     if (r.aboveSPA) spaCount++;
     if (r.nmwBreach) nmwCount++;
@@ -624,8 +603,6 @@ function renderSummary() {
   document.getElementById('sum-ee').textContent = fmt2(totalEE);
   document.getElementById('sum-er').textContent = fmt2(totalER);
   document.getElementById('sum-nirebate').textContent = fmt2(totalNIRebate);
-  document.getElementById('sum-nirebate-label').textContent = niRebateTarget === 'takehome' ? 'Total NI rebate paid as take-home pay' : 'Total NI rebate reinvested';
-  document.getElementById('sum-nirebate-note').textContent = niRebateTarget === 'takehome' ? 'not in total contribution' : 'this period';
   document.getElementById('sum-single').textContent = fmt2(totalSingle);
   document.getElementById('sum-total').textContent = fmt2(totalAll);
   renderAlerts(spaCount, nmwCount);
@@ -684,13 +661,6 @@ document.getElementById('btn-clear-all').addEventListener('click', function () {
   employees = []; renderTable();
 });
 document.getElementById('ni-rebate-pct').addEventListener('input', recalcAllDebounced);
-document.querySelectorAll('#ni-rebate-target-toggle .mode-btn').forEach(function (b) {
-  b.addEventListener('click', function () {
-    document.querySelectorAll('#ni-rebate-target-toggle .mode-btn').forEach(function (x) { x.classList.remove('active'); });
-    b.classList.add('active');
-    recalcAll();
-  });
-});
 
 // ---------------------------------------------------------------------
 // CSV import / export
@@ -768,10 +738,9 @@ document.getElementById('csv-file').addEventListener('change', function (e) {
 
 function exportCSV() {
   var niRebatePct = getNiRebatePct();
-  var niRebateTarget = getNiRebateTarget();
   var lines = [CSV_HEADERS.map(csvField).join(',')];
   employees.forEach(function (emp) {
-    var r = computeEmployee(emp, niRebatePct, niRebateTarget);
+    var r = computeEmployee(emp, niRebatePct);
     lines.push([
       csvField(emp.empNo), csvField(emp.dob), csvField(emp.hoursPerWeek), csvField(emp.annualSalary),
       csvField(emp.periodEarnings), csvField(emp.alterationFactor), csvField(r.pensionable.toFixed(2)),
