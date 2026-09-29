@@ -225,9 +225,10 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .bulk-table input{font-size:12px;padding:5px 7px;min-width:68px}
 .bulk-table input[type=date]{min-width:132px}
 .bulk-table input[type=number]{min-width:58px}
-.flag-spa,.flag-nmw{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;margin-right:2px}
+.flag-spa,.flag-nmw,.flag-smart{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;margin-right:2px}
 .flag-spa{background:#dbeafe;color:#1e3a8a}
 .flag-nmw{background:#fee2e2;color:#7f1d1d}
+.flag-smart{background:#e8d08a;color:#000d3c}
 .import-row{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;align-items:center}
 </style>
 </head>
@@ -305,9 +306,25 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
       <div class="sec-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
       <p class="stitle">Scheme settings</p>
     </div>
-    <div style="max-width:360px">
-      <label>Employer NI saving reinvested as pension rebate (%) <span class="tip" data-tip="Scheme-wide rate. When an employee sacrifices salary, the employer usually saves 15% employer NI on the sacrificed amount. Enter the percentage of that saving this scheme reinvests &mdash; the tool calculates the &pound; amount per employee from their own NI saving and always adds it to that employee's pension contribution. The employer's own NI saving can never be paid out as take-home pay. Enter 0 if the employer keeps the whole saving.">?</span></label>
-      <input type="number" id="ni-rebate-pct" value="0" min="0" max="100" step="1">
+    <div class="g3">
+      <div style="max-width:360px">
+        <label>Employer NI saving reinvested as pension rebate (%) <span class="tip" data-tip="Scheme-wide rate. When an employee sacrifices salary, the employer usually saves 15% employer NI on the sacrificed amount. Enter the percentage of that saving this scheme reinvests &mdash; the tool calculates the &pound; amount per employee from their own NI saving and always adds it to that employee's pension contribution. The employer's own NI saving can never be paid out as take-home pay. Enter 0 if the employer keeps the whole saving.">?</span></label>
+        <input type="number" id="ni-rebate-pct" value="0" min="0" max="100" step="1">
+      </div>
+      <div>
+        <label>Tax jurisdiction <span class="tip" data-tip="Scheme-wide setting used to work out each employee's own marginal tax rate for the SMART calculation below. Applies to every employee in this import &mdash; if the group has a mix of rUK and Scottish taxpayers, run them as separate imports so each gets the correct bands.">?</span></label>
+        <div class="mode-toggle bulk-jurisdiction">
+          <button type="button" class="mode-btn active" data-val="UK">rUK</button>
+          <button type="button" class="mode-btn" data-val="Scottish">Scottish</button>
+        </div>
+      </div>
+      <div>
+        <label>Employee's own tax + NI relief (SMART) <span class="tip" data-tip="Scheme-wide setting, applied to every employee. 'Net pay' (default) keeps the employee's own tax and NI saving from sacrificing as extra take-home pay &mdash; the Employee Contribution Amount column shows exactly their chosen rate applied to Pensionable Earnings, unchanged. 'Grossed up into pension' instead increases the actual amount sacrificed so the employee's real net cost matches what a Net Pay contribution of the same nominal amount would have cost them &mdash; full relief at their real marginal tax rate via each employee's own Annual Salary and this scheme's jurisdiction, not a flat percentage &mdash; so more ends up in the pension for the same net cost. Uses Annual Salary (not the alteration-adjusted Pensionable Earnings) to find the right tax band, so a partial-month starter/leaver is still banded on their true salary rate.">?</span></label>
+        <div class="mode-toggle seg-full bulk-smart-target">
+          <button type="button" class="mode-btn active" data-val="takehome">Net pay</button>
+          <button type="button" class="mode-btn" data-val="pension">Grossed up into pension</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -372,11 +389,12 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
     <summary>How these figures are calculated &mdash; assumptions &amp; methodology</summary>
     <div class="assumptions-body">
       <p><strong>Salary Sacrifice only:</strong> this tool models Salary Sacrifice pension contributions only. Each employee's contribution is treated as an employer pension contribution, reducing pay before it is used in the calculations below &mdash; it does not model Net Pay or Relief at Source arrangements for groups (use the single-person Salary Exchange Calculator for those).</p>
-      <p><strong>Pensionable earnings:</strong> calculated as Period Earnings (PCM) &times; Alteration Factor for each employee, with no qualifying-earnings banding applied &mdash; contribution rates are applied directly to this figure. Annual Salary is shown for reference only and does not feed into any calculation.</p>
-      <p><strong>Employer NI saving &amp; rebate:</strong> the employer NI saving on each employee's sacrificed amount is estimated using the 2026/27 annual secondary threshold (&pound;5,000) divided by 12 and the 15% employer NI rate, applied to that employee's own pensionable earnings before and after their sacrifice. This is a simplified monthly approximation of a calculation your payroll software will perform against the correct period thresholds and cumulative NI position, so treat these figures as indicative. The scheme-wide rebate percentage you enter is applied to each employee's own estimated saving and always added into their pension contribution (counted in Total Contribution Amount) &mdash; the employer's own NI saving can never be paid out as take-home pay.</p>
-      <p><strong>State Pension age flag:</strong> estimated from date of birth using the same simplified DWP transitional-band approach as the Retirement Planner. It is shown as an informational flag only &mdash; it does not change any of the contribution figures in this tool, since employee National Insurance treatment for employees above State Pension age should be confirmed and applied in your payroll system.</p>
-      <p><strong>Minimum wage flag:</strong> compares post-sacrifice pay for the period, divided by hours worked (Hours Per Week, pro-rated by Alteration Factor for the month), against the 2026/27 age-banded National Minimum/Living Wage rates (21 and over: &pound;12.71/hr; 18&ndash;20: &pound;10.85/hr; under 18: &pound;8.00/hr). It does not know about apprentice status, so apprentice rates are not modelled &mdash; check apprentices individually.</p>
-      <p><strong>Not modelled:</strong> income tax, employee National Insurance, take-home pay, Net Pay/Relief at Source arrangements, qualifying-earnings banding, and Annual Allowance tapering or MPAA restrictions &mdash; use the single-person Salary Exchange Calculator and the Annual Allowance Calculator alongside this tool for those.</p>
+      <p><strong>Pensionable earnings:</strong> calculated as Period Earnings (PCM) &times; Alteration Factor for each employee, with no qualifying-earnings banding applied &mdash; contribution rates are applied directly to this figure. Annual Salary is used only as the reference income for the SMART gross-up below (to find the employee's real marginal tax rate); it does not otherwise feed into any calculation.</p>
+      <p><strong>SMART &mdash; employee's own tax + NI relief:</strong> a scheme-wide toggle, applied to every employee. In the default 'Net pay' setting, the Employee Contribution Amount is simply Pensionable Earnings &times; the employee's rate, with any tax/NI saving landing as extra take-home pay, exactly as before this feature was added. In 'Grossed up into pension', that nominal amount is instead increased so the employee's real net cost matches what a Net Pay contribution of the same nominal amount would actually have cost them &mdash; full relief at their real marginal rate, computed from their own Annual Salary and the scheme's Tax jurisdiction setting via the same tax/NI engine (and bisection solver) as the single-person Salary Exchange Calculator, not a flat percentage &mdash; so it stays correct across rate-band and £100,000 personal-allowance-taper boundaries. The employer's 15% NI saving shown below is then calculated on this larger, grossed-up amount. A row is flagged <strong>SMART</strong> whenever it has been grossed up, showing the nominal and grossed-up amounts on hover. This tool does not support per-employee tax codes or above-basic-rate Scottish/rUK mixing within one import &mdash; every employee is treated as a standard 1257L taxpayer under the one jurisdiction selected; import employees with different jurisdictions separately.</p>
+      <p><strong>Employer NI saving &amp; rebate:</strong> the employer NI saving on each employee's sacrificed amount (after any SMART gross-up) is estimated using the 2026/27 annual secondary threshold (&pound;5,000) divided by 12 and the 15% employer NI rate, applied to that employee's own pensionable earnings before and after their sacrifice. This is a simplified monthly approximation of a calculation your payroll software will perform against the correct period thresholds and cumulative NI position, so treat these figures as indicative. The scheme-wide rebate percentage you enter is applied to each employee's own estimated saving and always added into their pension contribution (counted in Total Contribution Amount) &mdash; the employer's own NI saving can never be paid out as take-home pay.</p>
+      <p><strong>State Pension age flag:</strong> estimated from date of birth using the same simplified DWP transitional-band approach as the Retirement Planner. Above State Pension age, employee NI is correctly zeroed in the SMART gross-up calculation, but the flag itself is otherwise informational only &mdash; employee National Insurance treatment for these employees should still be confirmed and applied in your payroll system.</p>
+      <p><strong>Minimum wage flag:</strong> compares post-sacrifice pay for the period (after any SMART gross-up), divided by hours worked (Hours Per Week, pro-rated by Alteration Factor for the month), against the 2026/27 age-banded National Minimum/Living Wage rates (21 and over: &pound;12.71/hr; 18&ndash;20: &pound;10.85/hr; under 18: &pound;8.00/hr). It does not know about apprentice status, so apprentice rates are not modelled &mdash; check apprentices individually.</p>
+      <p><strong>Not modelled:</strong> full take-home pay, Net Pay/Relief at Source arrangements, per-employee tax codes, qualifying-earnings banding, and Annual Allowance tapering or MPAA restrictions &mdash; use the single-person Salary Exchange Calculator and the Annual Allowance Calculator alongside this tool for those.</p>
       <p>Every care has been taken as to accuracy, but Warren House Employee Benefits cannot accept responsibility for loss suffered by any person acting or refraining from acting as a result of material contained in this tool. <strong>For UK financial advisers only.</strong></p>
     </div>
   </details>
@@ -440,6 +458,64 @@ if (btt) btt.addEventListener('click', function() {
 var NI_ER_THRESHOLD_ANNUAL = 5000, NI_ER_RATE = 0.15;
 var NMW_21 = 12.71, NMW_18_20 = 10.85, NMW_UNDER18 = 8.00;
 
+// Tax/NI engine for the SMART (member's own tax + NI relief) gross-up, ported from
+// salexchange.html's computeScenario -- same constants, same bisection solver, no tax-code
+// concept here (everyone treated as standard 1257L-equivalent, matching this tool's existing
+// choice not to model full payroll precision). Runs in ANNUAL terms using each employee's own
+// Annual Salary as the reference income (not alteration-adjusted Pensionable Earnings, so a
+// partial-month starter/leaver still gets banded on their true salary rate), then the monthly
+// nominal sacrifice is annualised (x12) for the solve and the result divided back down.
+var PA_STANDARD = 12570, PA_TAPER_LIMIT = 100000;
+var NI_PRIMARY_THRESHOLD = 12570, NI_UEL = 50270, NI_EE_RATE = 0.08, NI_EE_UPPER_RATE = 0.02;
+
+function taperedPA(gross) {
+  if (gross <= PA_TAPER_LIMIT) return PA_STANDARD;
+  return Math.max(0, PA_STANDARD - (gross - PA_TAPER_LIMIT) / 2);
+}
+function taxFromBands(x, bands, topRate) {
+  var tax = 0, rem = x;
+  for (var i = 0; i < bands.length; i++) {
+    var amt = Math.min(rem, bands[i][0]);
+    tax += amt * bands[i][1];
+    rem -= amt;
+    if (rem <= 0) return tax;
+  }
+  return tax + rem * topRate;
+}
+function incomeTax(gross, jurisdiction) {
+  gross = Math.max(0, gross);
+  var pa = taperedPA(gross);
+  var x = Math.max(0, gross - pa);
+  if (jurisdiction === 'Scottish') {
+    return taxFromBands(x, [[3967, 0.19], [12989, 0.20], [14136, 0.21], [31338, 0.42], [50140, 0.45]], 0.48);
+  }
+  return taxFromBands(x, [[37700, 0.20], [74870, 0.40]], 0.45);
+}
+function employeeNI(income) {
+  if (income <= NI_PRIMARY_THRESHOLD) return 0;
+  var band = Math.min(income, NI_UEL) - NI_PRIMARY_THRESHOLD;
+  var above = Math.max(0, income - NI_UEL);
+  return band * NI_EE_RATE + above * NI_EE_UPPER_RATE;
+}
+function takeHomeForGross(grossAfterSacrifice, jurisdiction, aboveSPA) {
+  var tax = incomeTax(grossAfterSacrifice, jurisdiction);
+  var ni = aboveSPA ? 0 : employeeNI(grossAfterSacrifice);
+  return grossAfterSacrifice - tax - ni;
+}
+function solveGrossedUpSacrifice(nominalAmt, grossIncomeBefore, jurisdiction, aboveSPA) {
+  if (nominalAmt <= 0) return 0;
+  var taxSavingOnNominal = incomeTax(grossIncomeBefore, jurisdiction) - incomeTax(grossIncomeBefore - nominalAmt, jurisdiction);
+  var targetNetCost = nominalAmt - taxSavingOnNominal;
+  var targetTakeHome = takeHomeForGross(grossIncomeBefore, jurisdiction, aboveSPA) - targetNetCost;
+  var lo = nominalAmt, hi = Math.max(nominalAmt, grossIncomeBefore);
+  for (var i = 0; i < 60; i++) {
+    var mid = (lo + hi) / 2;
+    var th = takeHomeForGross(grossIncomeBefore - mid, jurisdiction, aboveSPA);
+    if (th > targetTakeHome) { lo = mid; } else { hi = mid; }
+  }
+  return (lo + hi) / 2;
+}
+
 var employees = [];
 
 function newEmployee() {
@@ -495,20 +571,39 @@ function getNiRebatePct() {
   var v = parseFloat(document.getElementById('ni-rebate-pct').value);
   return isNaN(v) ? 0 : v;
 }
-function computeEmployee(emp, niRebatePct) {
+function getJurisdiction() {
+  var btn = document.querySelector('.bulk-jurisdiction .mode-btn.active');
+  return btn ? btn.dataset.val : 'UK';
+}
+function getSmartTarget() {
+  var btn = document.querySelector('.bulk-smart-target .mode-btn.active');
+  return btn ? btn.dataset.val : 'takehome';
+}
+function computeEmployee(emp, niRebatePct, jurisdiction, smartTarget) {
+  jurisdiction = jurisdiction || 'UK';
+  smartTarget = smartTarget || 'takehome';
   var periodEarnings = emp.periodEarnings || 0;
   var alteration = (emp.alterationFactor === '' || emp.alterationFactor === null || isNaN(emp.alterationFactor)) ? 1 : emp.alterationFactor;
   alteration = Math.max(0, Math.min(1, alteration));
   var pensionable = periodEarnings * alteration;
-  var eeAmt = pensionable * ((emp.eeRate || 0) / 100);
+  var nominalEeAmt = pensionable * ((emp.eeRate || 0) / 100);
   var erAmt = pensionable * ((emp.erRate || 0) / 100);
+  var age = ageFromDOB(emp.dob);
+  var aboveSPA = isAboveSPA(emp.dob);
+
+  var eeAmt = nominalEeAmt, eeGrossUpBoost = 0;
+  if (smartTarget === 'pension' && nominalEeAmt > 0) {
+    var annualRef = emp.annualSalary > 0 ? emp.annualSalary : pensionable * 12;
+    var grossedUpAnnual = solveGrossedUpSacrifice(nominalEeAmt * 12, annualRef, jurisdiction, aboveSPA);
+    eeAmt = grossedUpAnnual / 12;
+    eeGrossUpBoost = Math.max(0, eeAmt - nominalEeAmt);
+  }
+
   var niSaving = Math.max(0, employerNIMonthly(pensionable) - employerNIMonthly(pensionable - eeAmt));
   var niRebate = niSaving * (niRebatePct / 100); // employer's own NI saving, if reinvested, always goes into the pension
   var employerSingle = emp.employerSingle || 0;
   var total = eeAmt + erAmt + niRebate + employerSingle;
 
-  var age = ageFromDOB(emp.dob);
-  var aboveSPA = isAboveSPA(emp.dob);
   var hoursPerWeek = emp.hoursPerWeek || 0;
   var hoursThisPeriod = hoursPerWeek * (52 / 12) * alteration;
   var postSacrificePay = pensionable - eeAmt;
@@ -517,7 +612,8 @@ function computeEmployee(emp, niRebatePct) {
   var nmwBreach = (hourlyRate !== null && floor !== null && hourlyRate < floor);
 
   return {
-    pensionable: pensionable, eeAmt: eeAmt, erAmt: erAmt, niSaving: niSaving, niRebate: niRebate,
+    pensionable: pensionable, eeAmt: eeAmt, eeNominal: nominalEeAmt, eeGrossUpBoost: eeGrossUpBoost,
+    erAmt: erAmt, niSaving: niSaving, niRebate: niRebate,
     employerSingle: employerSingle, total: total, age: age, aboveSPA: aboveSPA,
     hourlyRate: hourlyRate, nmwFloor: floor, nmwBreach: nmwBreach
   };
@@ -537,11 +633,12 @@ function flagsHTML(r) {
   var flags = [];
   if (r.aboveSPA) flags.push('<span class="flag-spa" title="Above State Pension age — confirm employee NI treatment in payroll">SPA</span>');
   if (r.nmwBreach) flags.push('<span class="flag-nmw" title="Post-sacrifice pay is below the minimum wage floor for this employee&#39;s age">NMW</span>');
+  if (r.eeGrossUpBoost > 0.005) flags.push('<span class="flag-smart" title="Grossed up from ' + fmt2(r.eeNominal) + ' nominal to ' + fmt2(r.eeAmt) + ' using this employee\'s own tax + NI relief (+' + fmt2(r.eeGrossUpBoost) + ')">SMART</span>');
   return flags.join(' ');
 }
 
 function rowHTML(emp, idx) {
-  var r = computeEmployee(emp, getNiRebatePct());
+  var r = computeEmployee(emp, getNiRebatePct(), getJurisdiction(), getSmartTarget());
   return '<tr data-idx="' + idx + '">' +
     '<td><input type="text" data-field="empNo" value="' + esc(emp.empNo) + '" placeholder="EMP001"></td>' +
     '<td><input type="date" data-field="dob" value="' + esc(emp.dob) + '"></td>' +
@@ -570,7 +667,7 @@ function renderTable() {
 function recalcRow(idx, skipSummary) {
   var emp = employees[idx];
   if (!emp) return;
-  var r = computeEmployee(emp, getNiRebatePct());
+  var r = computeEmployee(emp, getNiRebatePct(), getJurisdiction(), getSmartTarget());
   var tr = document.querySelector('#emp-tbody tr[data-idx="' + idx + '"]');
   if (tr) {
     tr.querySelector('.c-pensionable').textContent = fmt2(r.pensionable);
@@ -591,10 +688,10 @@ var recalcAllTimer;
 function recalcAllDebounced() { clearTimeout(recalcAllTimer); recalcAllTimer = setTimeout(recalcAll, 150); }
 
 function renderSummary() {
-  var niRebatePct = getNiRebatePct();
+  var niRebatePct = getNiRebatePct(), jurisdiction = getJurisdiction(), smartTarget = getSmartTarget();
   var totalEE = 0, totalER = 0, totalNIRebate = 0, totalSingle = 0, totalAll = 0, spaCount = 0, nmwCount = 0;
   employees.forEach(function (emp) {
-    var r = computeEmployee(emp, niRebatePct);
+    var r = computeEmployee(emp, niRebatePct, jurisdiction, smartTarget);
     totalEE += r.eeAmt; totalER += r.erAmt; totalNIRebate += r.niRebate; totalSingle += r.employerSingle; totalAll += r.total;
     if (r.aboveSPA) spaCount++;
     if (r.nmwBreach) nmwCount++;
@@ -661,6 +758,14 @@ document.getElementById('btn-clear-all').addEventListener('click', function () {
   employees = []; renderTable();
 });
 document.getElementById('ni-rebate-pct').addEventListener('input', recalcAllDebounced);
+[document.querySelector('.bulk-jurisdiction'), document.querySelector('.bulk-smart-target')].forEach(function (grp) {
+  grp.addEventListener('click', function (e) {
+    var btn = e.target.closest('.mode-btn'); if (!btn) return;
+    grp.querySelectorAll('.mode-btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    recalcAll();
+  });
+});
 
 // ---------------------------------------------------------------------
 // CSV import / export
@@ -737,10 +842,10 @@ document.getElementById('csv-file').addEventListener('change', function (e) {
 });
 
 function exportCSV() {
-  var niRebatePct = getNiRebatePct();
+  var niRebatePct = getNiRebatePct(), jurisdiction = getJurisdiction(), smartTarget = getSmartTarget();
   var lines = [CSV_HEADERS.map(csvField).join(',')];
   employees.forEach(function (emp) {
-    var r = computeEmployee(emp, niRebatePct);
+    var r = computeEmployee(emp, niRebatePct, jurisdiction, smartTarget);
     lines.push([
       csvField(emp.empNo), csvField(emp.dob), csvField(emp.hoursPerWeek), csvField(emp.annualSalary),
       csvField(emp.periodEarnings), csvField(emp.alterationFactor), csvField(r.pensionable.toFixed(2)),
