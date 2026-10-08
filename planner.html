@@ -42,8 +42,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 @media(max-width:400px){.g2,.g3,.g4{grid-template-columns:1fr}}
 label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;font-weight:500}
 input[type=number],input[type=text],select{width:100%;height:36px;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;background:#fff;color:var(--text)}
-input[type=date]{border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);height:36px;box-sizing:border-box;flex:1;min-width:0}
-input[type=date]:focus{outline:none;border-color:var(--navy)}
+input.dob-input{border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);height:36px;box-sizing:border-box;flex:1;min-width:0;width:auto}
+input.dob-input:focus{outline:none;border-color:var(--navy)}
+input.dob-input.dob-invalid{border-color:#c0392b}
 .dob-row{display:flex;align-items:center;gap:8px}
 .dob-age{font-size:12px;font-weight:600;color:var(--navy);background:var(--offwhite);border-radius:6px;padding:0 12px;height:36px;box-sizing:border-box;display:flex;align-items:center;white-space:nowrap;flex-shrink:0}
 input[type=number]:focus,input[type=text]:focus,select:focus{outline:none;border-color:var(--navy)}
@@ -268,7 +269,7 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
       <div>
         <label>Date of birth</label>
         <div class="dob-row">
-          <input type="date" id="dob" value="1991-06-15">
+          <input type="text" class="dob-input" id="dob" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" value="15/06/1991">
           <span class="dob-age" id="o-age">Age 35</span>
         </div>
       </div>
@@ -290,7 +291,7 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
       <div>
         <label>Date of birth</label>
         <div class="dob-row">
-          <input type="date" id="p-dob" value="1991-06-15">
+          <input type="text" class="dob-input" id="p-dob" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" value="15/06/1991">
           <span class="dob-age" id="p-o-age">Age 35</span>
         </div>
       </div>
@@ -752,8 +753,10 @@ window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('stateage').addEventListener('input', function(){ spaManuallyEdited = true; });
   document.getElementById('lifeexp').addEventListener('input', function(){ leManuallyEdited = true; });
 
-  document.getElementById('dob').addEventListener('input', function(){
-    var dob = document.getElementById('dob').value;
+  function dobHandler(){
+    var dobEl = document.getElementById('dob');
+    var dob = dobEl.value;
+    dobEl.classList.toggle('dob-invalid', !!dob && !parseDOBFlexible(dob));
     var age = ageFromDOB(dob);
     document.getElementById('o-age').textContent = 'Age ' + age;
     if(!spaManuallyEdited){
@@ -764,7 +767,20 @@ window.addEventListener('DOMContentLoaded', function() {
       document.getElementById('lifeexp').value = estimateLifeExpectancy(dob);
       document.getElementById('o-lifeexp').textContent = 'ONS-based estimate — edit if needed';
     }
-    calc();
+    // If this age would make the current retirement age invalid (e.g. entering an
+    // already-retired client's DOB), bump retirement age up to match so an immediate-income
+    // plan works straight away, rather than silently failing the retire>=age check in calc().
+    var retireEl = document.getElementById('retire');
+    if(retireEl && parseDOBFlexible(dob) && age >= (parseFloat(retireEl.value)||0)){
+      retireEl.value = age;
+    }
+    calcDebounced();
+  }
+  document.getElementById('dob').addEventListener('input', dobHandler);
+  document.getElementById('dob').addEventListener('blur', function(){
+    var dobEl = document.getElementById('dob');
+    var d = parseDOBFlexible(dobEl.value);
+    if(d) dobEl.value = formatDOBDisplay(d);
   });
 
   // Partner DOB drives partner age + partner state pension age + partner life expectancy
@@ -780,6 +796,7 @@ window.addEventListener('DOMContentLoaded', function() {
   var pDobEl = document.getElementById('p-dob');
   if(pDobEl) pDobEl.addEventListener('input', function(){
     var dob = pDobEl.value;
+    pDobEl.classList.toggle('dob-invalid', !!dob && !parseDOBFlexible(dob));
     var age = ageFromDOB(dob);
     var pAgeLbl = document.getElementById('p-o-age');
     if(pAgeLbl) pAgeLbl.textContent = 'Age ' + age;
@@ -795,7 +812,15 @@ window.addEventListener('DOMContentLoaded', function() {
       pLifeexpEl.value = estimateLifeExpectancy(dob);
       if(pOLifeexpEl) pOLifeexpEl.textContent = 'ONS-based estimate — edit if needed';
     }
-    calc();
+    var pRetireEl = document.getElementById('p-retire');
+    if(pRetireEl && parseDOBFlexible(dob) && age >= (parseFloat(pRetireEl.value)||0)){
+      pRetireEl.value = age;
+    }
+    calcDebounced();
+  });
+  if(pDobEl) pDobEl.addEventListener('blur', function(){
+    var d = parseDOBFlexible(pDobEl.value);
+    if(d) pDobEl.value = formatDOBDisplay(d);
   });
 
   // Contribution mode toggles (% vs £) for base employee/employer contributions
@@ -1209,10 +1234,37 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 
   // ---- Date of birth / age helpers ----
+  // Accepts free-typed UK dates (15/06/1950, 15-06-1950, 15.06.1950, or 15061950 with no
+  // separators) so the DOB field can just be typed, plus ISO YYYY-MM-DD for backwards
+  // compatibility with plans saved before this field was free text. Returns a Date or null.
+  function parseDOBFlexible(str){
+    str=(str||'').trim();
+    if(!str) return null;
+    var iso=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(str);
+    if(iso){
+      var dIso=new Date(parseInt(iso[1],10),parseInt(iso[2],10)-1,parseInt(iso[3],10));
+      return isNaN(dIso.getTime())?null:dIso;
+    }
+    var uk=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(str);
+    if(!uk){
+      var compact=/^(\d{2})(\d{2})(\d{4})$/.exec(str);
+      if(compact) uk=compact;
+    }
+    if(uk){
+      var day=parseInt(uk[1],10), month=parseInt(uk[2],10), year=parseInt(uk[3],10);
+      var d=new Date(year,month-1,day);
+      if(d.getFullYear()!==year||d.getMonth()!==month-1||d.getDate()!==day) return null;
+      return d;
+    }
+    return null;
+  }
+  function formatDOBDisplay(d){
+    function pad(n){return(n<10?'0':'')+n;}
+    return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+  }
   function ageFromDOB(dobStr){
-    if(!dobStr) return 35;
-    var dob=new Date(dobStr);
-    if(isNaN(dob.getTime())) return 35;
+    var dob=parseDOBFlexible(dobStr);
+    if(!dob) return 35;
     var today=new Date();
     var age=today.getFullYear()-dob.getFullYear();
     var m=today.getMonth()-dob.getMonth();
@@ -1222,9 +1274,8 @@ window.addEventListener('DOMContentLoaded', function() {
 
   // Returns the actual SPA *age in years* (integer, rounded) for use in the model
   function statePensionAgeYears(dobStr){
-    if(!dobStr) return 67;
-    var dob=new Date(dobStr);
-    if(isNaN(dob.getTime())) return 67;
+    var dob=parseDOBFlexible(dobStr);
+    if(!dob) return 67;
     var d1960a=new Date('1960-04-06'), d1960b=new Date('1961-03-06'), d1977=new Date('1977-04-06');
     if(dob < d1960a) return 66;
     if(dob < d1960b){
@@ -1459,6 +1510,7 @@ window.addEventListener('DOMContentLoaded', function() {
     // Static fields
     setVal('cname', s.clientName);
     setVal('dob', s.dob);
+    (function(){ var d=parseDOBFlexible(document.getElementById('dob').value); if(d) document.getElementById('dob').value=formatDOBDisplay(d); })();
     setVal('retire', s.retire);
     setVal('salary', s.salary);
     setVal('salr', s.salr);
@@ -1595,6 +1647,7 @@ window.addEventListener('DOMContentLoaded', function() {
     if (householdBtn) householdBtn.click();
 
     setVal('p-dob', s.pDob);
+    (function(){ var d=parseDOBFlexible(document.getElementById('p-dob').value); if(d) document.getElementById('p-dob').value=formatDOBDisplay(d); })();
     setVal('p-retire', s.pRetire);
     setVal('p-salary', s.pSalary);
 
@@ -1969,7 +2022,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var lifeexp=gv('lifeexp')||87,modelTo=gv('modelto')||100;
     var tiers=getTiers(),savs=getSavs(),incs=getIncs(),lumpsums=getLumpsums();
     var years=Math.max(0,retire-age);
-    if(retire<=age){document.getElementById('alerts').innerHTML='<div class="warn">Retirement age must be greater than current age.</div>';document.getElementById('metrics').innerHTML='';return;}
+    if(retire<age){document.getElementById('alerts').innerHTML='<div class="warn">Retirement age cannot be before your current age.</div>';document.getElementById('metrics').innerHTML='';return;}
 
     var A=computeAccumulation({age:age,retire:retire,salary:salary,startPot:startPot,gR:gR,iR:iR,sR:sR,eeMode:eeMode,erMode:erMode,eePct:eePct,erPct:erPct,eeAmt:eeAmt,erAmt:erAmt,tiers:tiers,savs:savs,lumpsums:lumpsums,years:years});
     var aL=A.aL, aV=A.aV, pot=A.pot, tc=A.tc, tSavs=A.tSavs, growth=A.growth, realPot=A.realPot;
@@ -2101,8 +2154,8 @@ window.addEventListener('DOMContentLoaded', function() {
     var yearsP = Math.max(0, retireP - ageP);
 
     var houseAccumBlock = document.getElementById('household-accum-block');
-    if(retireP <= ageP){
-      if(houseAccumBlock) houseAccumBlock.innerHTML = '<div class="warn">Partner&#39;s retirement age must be greater than their current age.</div>';
+    if(retireP < ageP){
+      if(houseAccumBlock) houseAccumBlock.innerHTML = '<div class="warn">Partner&#39;s retirement age cannot be before their current age.</div>';
       return;
     }
 
