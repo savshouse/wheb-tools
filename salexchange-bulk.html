@@ -229,6 +229,9 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .flag-spa{background:#dbeafe;color:#1e3a8a}
 .flag-nmw{background:#fee2e2;color:#7f1d1d}
 .flag-smart{background:#e8d08a;color:#000d3c}
+.tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;background:var(--navy);color:var(--gold-light);border-radius:50%;font-size:9px;font-weight:700;cursor:pointer;vertical-align:middle;margin-left:3px;flex-shrink:0}
+.tooltip-box{position:absolute;z-index:1000;background:#1a1a2e;color:#fff;font-size:12px;line-height:1.5;padding:.6rem .85rem;border-radius:7px;max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none}
+.csv-note{font-size:12px;color:var(--muted);background:var(--offwhite);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:1rem}
 .import-row{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;align-items:center}
 </style>
 </head>
@@ -341,12 +344,15 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
       <button type="button" class="abtn" id="btn-add-row">&#43; Add employee</button>
       <button type="button" class="abtn" id="btn-clear-all">Clear all</button>
     </div>
+    <div class="csv-note">&#9888; Enter contribution rates as <strong>plain numbers</strong> (e.g. <code>32.5</code> for 32.5%), not a figure typed with a <code>%</code> sign. A CSV file carries no cell formatting at all &mdash; but if Excel applies its own <strong>Percentage</strong> number format to that column (which it does automatically if you type a value with a <code>%</code> sign), Excel will silently round both the on-screen display <em>and</em> the saved CSV to that format's decimal places &mdash; e.g. a column set to show 0 decimal places turns 32.5% into 33% permanently, with no way to recover the original figure afterwards. Keep the column formatted as a plain number and this can't happen.</div>
     <div class="bulk-scroll">
       <table class="bulk-table">
         <thead><tr>
           <th>Employee number</th><th>Date of birth</th><th>Hours/wk</th><th>Annual salary</th>
           <th>Period earnings (PCM)</th><th>Alteration factor</th><th>Pensionable earnings</th>
-          <th>EE rate %</th><th>ER rate %</th><th>EE amount &pound;</th><th>ER amount &pound;</th>
+          <th>EE rate % <span class="tip" data-tip="Enter as a plain number, e.g. 32.5 for 32.5% — not a value typed with a % sign in Excel. Excel auto-applies its own Percentage format to %-typed values, which can silently round the figure (and whatever gets saved to CSV) to that format's decimal places.">?</span></th>
+          <th>ER rate % <span class="tip" data-tip="Same as EE rate % — enter as a plain number (e.g. 3 for 3%), not a %-typed Excel value, to avoid Excel's Percentage format silently rounding it on save.">?</span></th>
+          <th>EE amount &pound;</th><th>ER amount &pound;</th>
           <th>NI rebate &pound;</th><th>Employer single &pound;</th><th>Total &pound;</th><th>Flags</th><th></th>
         </tr></thead>
         <tbody id="emp-tbody"></tbody>
@@ -579,6 +585,7 @@ function getSmartTarget() {
   var btn = document.querySelector('.bulk-smart-target .mode-btn.active');
   return btn ? btn.dataset.val : 'takehome';
 }
+function round2(n) { return Math.round((n || 0) * 100) / 100; }
 function computeEmployee(emp, niRebatePct, jurisdiction, smartTarget) {
   jurisdiction = jurisdiction || 'UK';
   smartTarget = smartTarget || 'takehome';
@@ -586,23 +593,26 @@ function computeEmployee(emp, niRebatePct, jurisdiction, smartTarget) {
   var alteration = (emp.alterationFactor === '' || emp.alterationFactor === null || isNaN(emp.alterationFactor)) ? 1 : emp.alterationFactor;
   alteration = Math.max(0, Math.min(1, alteration));
   var pensionable = periodEarnings * alteration;
-  var nominalEeAmt = pensionable * ((emp.eeRate || 0) / 100);
-  var erAmt = pensionable * ((emp.erRate || 0) / 100);
+  var nominalEeAmt = round2(pensionable * ((emp.eeRate || 0) / 100));
+  var erAmt = round2(pensionable * ((emp.erRate || 0) / 100));
   var age = ageFromDOB(emp.dob);
   var aboveSPA = isAboveSPA(emp.dob);
 
+  // Every component is rounded to the penny as soon as it becomes a displayed figure, and Total
+  // is then summed from those already-rounded pennies -- not from full floating-point precision --
+  // so the Total column always reconciles exactly to the other columns as printed on screen.
   var eeAmt = nominalEeAmt, eeGrossUpBoost = 0;
   if (smartTarget === 'pension' && nominalEeAmt > 0) {
     var annualRef = emp.annualSalary > 0 ? emp.annualSalary : pensionable * 12;
     var grossedUpAnnual = solveGrossedUpSacrifice(nominalEeAmt * 12, annualRef, jurisdiction, aboveSPA);
-    eeAmt = grossedUpAnnual / 12;
-    eeGrossUpBoost = Math.max(0, eeAmt - nominalEeAmt);
+    eeAmt = round2(grossedUpAnnual / 12);
+    eeGrossUpBoost = Math.max(0, round2(eeAmt - nominalEeAmt));
   }
 
   var niSaving = Math.max(0, employerNIMonthly(pensionable) - employerNIMonthly(pensionable - eeAmt));
-  var niRebate = niSaving * (niRebatePct / 100); // employer's own NI saving, if reinvested, always goes into the pension
-  var employerSingle = emp.employerSingle || 0;
-  var total = eeAmt + erAmt + niRebate + employerSingle;
+  var niRebate = round2(niSaving * (niRebatePct / 100)); // employer's own NI saving, if reinvested, always goes into the pension
+  var employerSingle = round2(emp.employerSingle || 0);
+  var total = round2(eeAmt + erAmt + niRebate + employerSingle);
 
   var hoursPerWeek = emp.hoursPerWeek || 0;
   var hoursThisPeriod = hoursPerWeek * (52 / 12) * alteration;
@@ -857,7 +867,7 @@ function exportCSV() {
 }
 function downloadTemplate() {
   var lines = [CSV_HEADERS.map(csvField).join(',')];
-  lines.push(['EMP001', '1985-06-14', '37.5', '35000', '2916.67', '1', '2916.67', '5', '3', '145.83', '87.50', '0.00', '0.00', '233.33'].map(csvField).join(','));
+  lines.push(['EMP001', '1985-06-14', '37.5', '35000', '2916.67', '1', '2916.67', '5.25', '3.00', '153.13', '87.50', '0.00', '0.00', '240.63'].map(csvField).join(','));
   downloadCSV(lines.join('\r\n'), 'salary_exchange_bulk_template.csv');
 }
 function downloadCSV(content, filename) {
@@ -870,6 +880,30 @@ function downloadCSV(content, filename) {
 }
 document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 document.getElementById('btn-template-csv').addEventListener('click', downloadTemplate);
+
+// ---------------------------------------------------------------------
+// Tooltip (matches aacalc.html behaviour)
+// ---------------------------------------------------------------------
+var tipEl = null;
+function showTip() {
+  hideTip();
+  var text = this.getAttribute('data-tip');
+  if (!text) return;
+  tipEl = document.createElement('div');
+  tipEl.className = 'tooltip-box';
+  tipEl.textContent = text;
+  document.body.appendChild(tipEl);
+  var r = this.getBoundingClientRect();
+  tipEl.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 320)) + 'px';
+  tipEl.style.top = (r.bottom + window.scrollY + 6) + 'px';
+}
+function hideTip() { if (tipEl) { tipEl.remove(); tipEl = null; } }
+document.addEventListener('click', hideTip);
+document.querySelectorAll('.tip').forEach(function (el) {
+  el.addEventListener('mouseenter', showTip);
+  el.addEventListener('mouseleave', hideTip);
+  el.addEventListener('click', function (e) { e.stopPropagation(); showTip.call(this); });
+});
 
 // ---------------------------------------------------------------------
 // Init

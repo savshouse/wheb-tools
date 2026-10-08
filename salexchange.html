@@ -53,6 +53,8 @@ input[type=number]:focus,input[type=text]:focus,select:focus{outline:none;border
 input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .sv{font-size:12px;font-weight:700;color:var(--navy);margin-top:3px}
 .divider{border-top:1px solid var(--border);margin:.85rem 0 .7rem}
+.tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;background:var(--navy);color:var(--gold-light);border-radius:50%;font-size:9px;font-weight:700;cursor:pointer;vertical-align:middle;margin-left:3px;flex-shrink:0}
+.tooltip-box{position:absolute;z-index:1000;background:#1a1a2e;color:#fff;font-size:12px;line-height:1.5;padding:.6rem .85rem;border-radius:7px;max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none}
 .mode-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
 .mode-btn{font-size:11px;padding:4px 10px;border:none;background:#fff;color:var(--muted);cursor:pointer;font-weight:600}
 .mode-btn.active{background:var(--navy);color:#fff}
@@ -766,6 +768,12 @@ function showTip() {
 }
 function hideTip() { if (tipEl) { tipEl.remove(); tipEl = null; } }
 document.addEventListener('click', hideTip);
+document.querySelectorAll('.tip').forEach(function (el) {
+  if (el.closest('.scenario-card')) return; // scenario-card tips are wired individually as each card is created
+  el.addEventListener('mouseenter', showTip);
+  el.addEventListener('mouseleave', hideTip);
+  el.addEventListener('click', function (e) { e.stopPropagation(); showTip.call(this); });
+});
 
 // ---------------------------------------------------------------------
 // Render
