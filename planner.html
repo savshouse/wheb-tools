@@ -2027,7 +2027,7 @@ window.addEventListener('DOMContentLoaded', function() {
     var A=computeAccumulation({age:age,retire:retire,salary:salary,startPot:startPot,gR:gR,iR:iR,sR:sR,eeMode:eeMode,erMode:erMode,eePct:eePct,erPct:erPct,eeAmt:eeAmt,erAmt:erAmt,tiers:tiers,savs:savs,lumpsums:lumpsums,years:years});
     var aL=A.aL, aV=A.aV, pot=A.pot, tc=A.tc, tSavs=A.tSavs, growth=A.growth, realPot=A.realPot;
 
-    var D=computeDecumulation({pot:pot,retire:retire,modelTo:modelTo,pclsPct:pclsPct,anAmt:anAmt,anRate:anRate,ddrBaseMonthly:ddrBaseMonthly,ddg:ddg,ddInfl:ddInfl,ddStages:ddStages,ddLumpsums:ddLumpsums,statePa:statePa,stateAge:stateAge,stateInfl:stateInfl,incs:incs});
+    var D=computeDecumulation({pot:pot,retire:retire,modelTo:modelTo,pclsPct:pclsPct,anAmt:anAmt,anRate:anRate,ddrBaseMonthly:ddrBaseMonthly,ddg:ddg,ddInfl:ddInfl,ddStages:ddStages,ddLumpsums:ddLumpsums,statePa:statePa,stateAge:stateAge,stateInfl:stateInfl,incs:incs,iR:iR});
     var dL=D.dL, dV=D.dV, rows=D.rows, exAge=D.exAge, pcls=D.pcls, anPot=D.anPot, ddPot=D.ddPot, anIncome=D.anIncome, tInc=D.tInc, tax=D.tax;
 
     document.getElementById('tax-summary').innerHTML=
@@ -2052,11 +2052,10 @@ window.addEventListener('DOMContentLoaded', function() {
       ?'<div class="warn">&#9888; Drawdown pot runs out at age '+exAge+', before life expectancy of '+lifeexp+'. Consider increasing contributions or reducing drawdown rate.</div>'
       :'<div class="good">&#10003; Drawdown pot survives to age '+(exAge||modelTo)+' on current settings.</div>';
 
-    var stCap=statePa*Math.max(0,lifeexp-stateAge);
-    var grand=tc+Math.max(0,growth)+tSavs+stCap+(anPot>0?anPot:0);
+    var grand=tc+Math.max(0,growth)+tSavs+(anPot>0?anPot:0);
     function bar(l,v,bg){v=Math.max(0,Math.round(v));var p=grand>0?Math.round(v/grand*100):0;return'<div class="barlbl"><span>'+l+'</span><span>'+fmtM(v)+' ('+p+'%)</span></div><div class="bartrack"><div class="barfill" style="width:'+p+'%;background:'+bg+'"></div></div>';}
-    document.getElementById('bars').innerHTML=bar('Pension contributions',tc,'#1D353B')+bar('Investment growth',Math.max(0,growth),'#c9a84c')+(tSavs>0?bar('Other savings',tSavs,'#7F77DD'):'')+(stCap>0?bar('State pension (lifetime)',stCap,'#378ADD'):'')+(anPot>0?bar('Annuity pot',anPot,'#1D9E75'):'');
-    document.getElementById('barleg').innerHTML='<div class="legi"><div class="legdot" style="background:#1D353B"></div>Contributions</div><div class="legi"><div class="legdot" style="background:#c9a84c"></div>Growth</div>'+(tSavs>0?'<div class="legi"><div class="legdot" style="background:#7F77DD"></div>Other savings</div>':'')+'<div class="legi"><div class="legdot" style="background:#378ADD"></div>State pension</div>'+(anPot>0?'<div class="legi"><div class="legdot" style="background:#1D9E75"></div>Annuity pot</div>':'');
+    document.getElementById('bars').innerHTML=bar('Pension contributions',tc,'#1D353B')+bar('Investment growth',Math.max(0,growth),'#c9a84c')+(tSavs>0?bar('Other savings',tSavs,'#7F77DD'):'')+(anPot>0?bar('Annuity pot',anPot,'#1D9E75'):'');
+    document.getElementById('barleg').innerHTML='<div class="legi"><div class="legdot" style="background:#1D353B"></div>Contributions</div><div class="legi"><div class="legdot" style="background:#c9a84c"></div>Growth</div>'+(tSavs>0?'<div class="legi"><div class="legdot" style="background:#7F77DD"></div>Other savings</div>':'')+(anPot>0?'<div class="legi"><div class="legdot" style="background:#1D9E75"></div>Annuity pot</div>':'');
 
     var gc={color:'rgba(0,0,0,0.05)'};
     var yT={color:'#999',callback:function(v){return fmtM(v);},maxTicksLimit:5,font:{size:11}};
@@ -2182,7 +2181,7 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     var AP = computeAccumulation({age:ageP,retire:retireP,salary:salaryP,startPot:startPotP,gR:gR,iR:iR,sR:sR,eeMode:eeModeP,erMode:erModeP,eePct:eePctP,erPct:erPctP,eeAmt:eeAmtP,erAmt:erAmtP,tiers:tiersP,savs:savsP,lumpsums:lumpsumsP,years:yearsP});
-    var DP = computeDecumulation({pot:AP.pot,retire:retireP,modelTo:modelToP,pclsPct:pclsPctP,anAmt:anAmtP,anRate:anRateP,ddrBaseMonthly:ddrBaseMonthlyP,ddg:ddgP,ddInfl:ddInflP,ddStages:ddStagesP,ddLumpsums:ddLumpsumsP,statePa:statePaP,stateAge:stateAgeP,stateInfl:stateInflP,incs:incsP});
+    var DP = computeDecumulation({pot:AP.pot,retire:retireP,modelTo:modelToP,pclsPct:pclsPctP,anAmt:anAmtP,anRate:anRateP,ddrBaseMonthly:ddrBaseMonthlyP,ddg:ddgP,ddInfl:ddInflP,ddStages:ddStagesP,ddLumpsums:ddLumpsumsP,statePa:statePaP,stateAge:stateAgeP,stateInfl:stateInflP,incs:incsP,iR:iR});
 
     // ---- Household accumulation summary ----
     var combinedPot = A.pot + AP.pot;
