@@ -2153,9 +2153,12 @@ window.addEventListener('DOMContentLoaded', function() {
     var tiersP = getTiersP(), savsP = getSavsP(), incsP = getIncsP(), lumpsumsP = getLumpsumsP();
     var yearsP = Math.max(0, retireP - ageP);
 
-    var houseAccumBlock = document.getElementById('household-accum-block');
+    var houseAccumMetrics = document.getElementById('household-accum-metrics');
     if(retireP < ageP){
-      if(houseAccumBlock) houseAccumBlock.innerHTML = '<div class="warn">Partner&#39;s retirement age cannot be before their current age.</div>';
+      // Write into the metrics leaf, not its parent block -- overwriting the block's innerHTML
+      // would permanently delete this very element (it's a child of that block, identified by
+      // this same id), so the next valid calc() would crash trying to find it again.
+      if(houseAccumMetrics) houseAccumMetrics.innerHTML = '<div class="warn">Partner&#39;s retirement age cannot be before their current age.</div>';
       return;
     }
 
@@ -2164,7 +2167,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
     // ---- Household accumulation summary ----
     var combinedPot = A.pot + AP.pot;
-    document.getElementById('household-accum-metrics').innerHTML =
+    if(houseAccumMetrics) houseAccumMetrics.innerHTML =
       '<div class="metric"><p class="ml">Person 1 pot at '+ctx.retire+'</p><p class="mv">'+fmtM(A.pot)+'</p><p class="ms">Age '+ctx.retire+'</p></div>'+
       '<div class="metric"><p class="ml">Person 2 pot at '+retireP+'</p><p class="mv">'+fmtM(AP.pot)+'</p><p class="ms">Age '+retireP+'</p></div>'+
       '<div class="metric"><p class="ml">Combined pension wealth</p><p class="mv">'+fmtM(combinedPot)+'</p><p class="ms">Sum of both pots</p></div>';
@@ -2186,7 +2189,8 @@ window.addEventListener('DOMContentLoaded', function() {
     var hRows = years.map(function(y){ return {year:y, p1:Math.round(map[y].p1), p2:Math.round(map[y].p2), total:Math.round(map[y].p1+map[y].p2)}; });
 
     var bothRetiredRow = hRows.find(function(r){ return r.p1>0 && r.p2>0; }) || hRows[hRows.length-1] || {p1:0,p2:0,total:0};
-    document.getElementById('household-decum-metrics').innerHTML =
+    var houseDecumMetrics = document.getElementById('household-decum-metrics');
+    if(houseDecumMetrics) houseDecumMetrics.innerHTML =
       '<div class="metric"><p class="ml">Person 1 income at '+ctx.retire+'</p><p class="mv">'+fmtM(ctx.tInc)+'</p><p class="ms">Net: '+fmtF(Math.round(ctx.tax.net/12))+'/mo</p></div>'+
       '<div class="metric"><p class="ml">Person 2 income at '+retireP+'</p><p class="mv">'+fmtM(DP.tInc)+'</p><p class="ms">Net: '+fmtF(Math.round(DP.tax.net/12))+'/mo</p></div>'+
       '<div class="metric"><p class="ml">Household income once both retired</p><p class="mv">'+fmtM(bothRetiredRow.total)+'</p><p class="ms">Combined, from '+bothRetiredRow.year+'</p></div>';
