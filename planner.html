@@ -55,9 +55,9 @@ input[type=range]{width:100%;accent-color:var(--navy);cursor:pointer}
 .accum-table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
 .accum-table th{background:var(--offwhite);color:var(--navy);text-transform:uppercase;font-size:10px;letter-spacing:.05em;padding:.55rem .7rem;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap}
 .accum-table td{padding:.55rem .7rem;border-bottom:1px solid var(--border);color:var(--text)}
-.accum-table tr:last-child td{font-weight:700;color:var(--navy);background:var(--offwhite)}
-.accum-table tr:last-child td:first-child{border-radius:6px 0 0 6px}
-.accum-table tr:last-child td:last-child{border-radius:0 6px 6px 0}
+.accum-table tr.retire-row td{font-weight:700;color:var(--navy);background:var(--offwhite)}
+.accum-table tr.retire-row td:first-child{border-radius:6px 0 0 6px}
+.accum-table tr.retire-row td:last-child{border-radius:0 6px 6px 0}
 .accum-table-note{font-size:11px;color:var(--muted);margin-top:.5rem;font-style:italic}
 .stepper{position:relative;display:flex;align-items:center}
 .stepper input{padding-right:26px!important}
@@ -588,7 +588,7 @@ body.decum-on .decum-toggle .dt-chev{transform:rotate(90deg)}
     <div class="leg" id="barleg"></div>
     <p class="charttitle">Pot accumulation to retirement</p>
     <div class="chartbox"><canvas id="cAccum"></canvas></div>
-    <p class="charttitle">Projected value in your final years to retirement</p>
+    <p class="charttitle">Projected value around your retirement date</p>
     <div class="accum-table-wrap"><table class="accum-table" id="accum-table"><thead><tr><th>Age</th><th>Projected pot</th><th>25% PCLS</th><th>Annuity income</th></tr></thead><tbody id="accum-table-body"></tbody></table></div><p class="accum-table-note" id="accum-table-note"></p>
 
     <div class="partner-region" id="household-accum-block">
@@ -2065,7 +2065,11 @@ window.addEventListener('DOMContentLoaded', function() {
 
     mkChart('cAccum',{type:'line',data:{labels:aL,datasets:[{label:'Pension pot',data:aV,fill:true,backgroundColor:'rgba(29,53,59,0.07)',borderColor:'#1D353B',borderWidth:2,pointRadius:0,pointHoverRadius:4,pointHitRadius:12,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'nearest',axis:'x',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{title:function(items){return 'Age '+items[0].label;},label:function(c){return' '+fmtF(c.raw);}}}},scales:{x:xAx,y:{grid:gc,ticks:yT}}}});
 
-    var atStart=Math.max(0,aL.length-7);
+    // 2 years before retirement, the retirement year itself, then 2 years after -- the "after"
+    // years aren't part of computeAccumulation's own output (it stops exactly at retirement), so
+    // they're projected forward here using the same growth/contribution/tier logic, continuing
+    // from the pot and salary already reached at retirement.
+    var atStart=Math.max(0,aL.length-3);
     var atRows=[];
     for(var ati=atStart;ati<aL.length;ati++){
       var atAge=aL[ati], atVal=aV[ati];
@@ -2074,14 +2078,29 @@ window.addEventListener('DOMContentLoaded', function() {
       var atIncome=atResidual*anRate;
       atRows.push({age:atAge,val:atVal,taxfree:atTaxFree,income:atIncome});
     }
+    var exSal=salary*Math.pow(1+sR,years), exPot=pot;
+    for(var exY=0;exY<2;exY++){
+      var exAgeAtStart=retire+exY;
+      var exE=eeMode==='pct'?eePct*exSal:eeAmt, exR=erMode==='pct'?erPct*exSal:erAmt;
+      for(var exTi=0;exTi<tiers.length;exTi++){
+        if(exAgeAtStart>=tiers[exTi].age){
+          if(tiers[exTi].mode==='amt'){ exE=tiers[exTi].ee; exR=tiers[exTi].er; }
+          else { exE=tiers[exTi].ee*exSal; exR=tiers[exTi].er*exSal; }
+        }
+      }
+      var exLump=lumpsums.reduce(function(s,l){return s+(l.age===exAgeAtStart?l.amt:0);},0);
+      exPot=(exPot+exE+exR+exLump)*(1+gR); exSal*=(1+sR);
+      var exTaxFree=exPot*pclsPct, exIncome=exPot*(1-pclsPct)*anRate;
+      atRows.push({age:retire+exY+1,val:exPot,taxfree:exTaxFree,income:exIncome});
+    }
     var atBody=document.getElementById('accum-table-body');
     if(atBody){
       atBody.innerHTML=atRows.map(function(r){
-        return '<tr><td>'+r.age+'</td><td>'+fmtF(r.val)+'</td><td>'+fmtF(r.taxfree)+'</td><td>'+fmtF(r.income)+'/yr</td></tr>';
+        return '<tr'+(r.age===retire?' class="retire-row"':'')+'><td>'+r.age+'</td><td>'+fmtF(r.val)+'</td><td>'+fmtF(r.taxfree)+'</td><td>'+fmtF(r.income)+'/yr</td></tr>';
       }).join('');
     }
     var atNote=document.getElementById('accum-table-note');
-    if(atNote) atNote.textContent='Annuity income assumes the remaining '+Math.round((1-pclsPct)*100)+'% of the pot (after '+Math.round(pclsPct*100)+'% PCLS) is used to purchase an annuity at your chosen rate of '+(anRate*100).toFixed(2)+'% per year.';
+    if(atNote) atNote.textContent='Annuity income assumes the remaining '+Math.round((1-pclsPct)*100)+'% of the pot (after '+Math.round(pclsPct*100)+'% PCLS) is used to purchase an annuity at your chosen rate of '+(anRate*100).toFixed(2)+'% per year. The two years after retirement (age '+(retire+1)+' and '+(retire+2)+') assume contributions continue at the same rate rather than reflecting the drawdown plan below — a "what if you worked a little longer" comparison alongside the chosen retirement age.';
 
     var exIdx=exAge?dL.indexOf(exAge):-1;
     var bgs=dV.map(function(_,i){return(exIdx<0||i<exIdx)?'rgba(29,53,59,0.7)':'rgba(226,75,74,0.55)';});
